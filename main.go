@@ -14,9 +14,9 @@ func main() {
 	}
 	defer file.Close()
 
-	to, err := torrent.Open(file)
+	t, err := torrent.Open(file)
 	if err != nil {
 		log.Fatal(err)
 	}
-	to.Download()
+	t.Download()
 }

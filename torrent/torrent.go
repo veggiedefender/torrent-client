@@ -10,7 +10,8 @@ import (
 	"github.com/jackpal/bencode-go"
 )
 
-const port = 6881
+// Port to listen on
+const Port uint16 = 6881
 
 // Torrent encodes the metadata from a .torrent file
 type Torrent struct {
@@ -35,19 +36,14 @@ type bencodeTorrent struct {
 }
 
 // Download downloads a torrent
-func (to *Torrent) Download() error {
+func (t *Torrent) Download() error {
 	peerID := make([]byte, 20)
 	_, err := rand.Read(peerID)
 	if err != nil {
 		return err
 	}
 
-	tracker := Tracker{
-		PeerID:  peerID,
-		Torrent: to,
-		Port:    port,
-	}
-	peers, err := tracker.getPeers()
+	peers, err := t.getPeers(peerID, Port)
 	fmt.Println(peers)
 	return nil
 }
@@ -59,11 +55,11 @@ func Open(r io.Reader) (*Torrent, error) {
 	if err != nil {
 		return nil, err
 	}
-	to, err := bto.toTorrent()
+	t, err := bto.toTorrent()
 	if err != nil {
 		return nil, err
 	}
-	return to, nil
+	return t, nil
 }
 
 func (i *bencodeInfo) hash() ([]byte, error) {
@@ -101,7 +97,7 @@ func (bto *bencodeTorrent) toTorrent() (*Torrent, error) {
 	if err != nil {
 		return nil, err
 	}
-	to := Torrent{
+	t := Torrent{
 		Announce:    bto.Announce,
 		InfoHash:    infoHash,
 		PieceHashes: pieceHashes,
@@ -109,5 +105,5 @@ func (bto *bencodeTorrent) toTorrent() (*Torrent, error) {
 		Length:      bto.Info.Length,
 		Name:        bto.Info.Name,
 	}
-	return &to, nil
+	return &t, nil
 }
