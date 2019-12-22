@@ -2,26 +2,29 @@ package peer
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 )
 
+type messageID uint8
+
 // Message ID
 const (
-	MsgChoke         uint8 = 0
-	MsgUnchoke       uint8 = 1
-	MsgInterested    uint8 = 2
-	MsgNotInterested uint8 = 3
-	MsgHave          uint8 = 4
-	MsgBitfield      uint8 = 5
-	MsgRequest       uint8 = 6
-	MsgPiece         uint8 = 7
-	MsgCancel        uint8 = 8
-	MsgPort          uint8 = 9
+	MsgChoke         messageID = 0
+	MsgUnchoke       messageID = 1
+	MsgInterested    messageID = 2
+	MsgNotInterested messageID = 3
+	MsgHave          messageID = 4
+	MsgBitfield      messageID = 5
+	MsgRequest       messageID = 6
+	MsgPiece         messageID = 7
+	MsgCancel        messageID = 8
+	MsgPort          messageID = 9
 )
 
 // Message m
 type Message struct {
-	ID      uint8
+	ID      messageID
 	Payload []byte
 }
 
@@ -48,6 +51,7 @@ func Read(r io.Reader) (*Message, error) {
 	}
 	length := binary.BigEndian.Uint32(lengthBuf)
 
+	// keep-alive message
 	if length == 0 {
 		return nil, nil
 	}
@@ -59,9 +63,43 @@ func Read(r io.Reader) (*Message, error) {
 	}
 
 	m := Message{
-		ID:      messageBuf[0],
+		ID:      messageID(messageBuf[0]),
 		Payload: messageBuf[1:],
 	}
 
 	return &m, nil
+}
+
+func (m *Message) String() string {
+	if m == nil {
+		return "KeepAlive"
+	}
+
+	var idName string
+	switch m.ID {
+	case MsgChoke:
+		idName = "Choke"
+	case MsgUnchoke:
+		idName = "Unchoke"
+	case MsgInterested:
+		idName = "Interested"
+	case MsgNotInterested:
+		idName = "NotInterested"
+	case MsgHave:
+		idName = "Have"
+	case MsgBitfield:
+		idName = "Bitfield"
+	case MsgRequest:
+		idName = "Request"
+	case MsgPiece:
+		idName = "Piece"
+	case MsgCancel:
+		idName = "Cancel"
+	case MsgPort:
+		idName = "Port"
+	default:
+		idName = fmt.Sprintf("Unknown#%d", m.ID)
+	}
+
+	return fmt.Sprintf("%s\t[% x]", idName, m.Payload)
 }
