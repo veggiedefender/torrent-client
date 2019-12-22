@@ -22,7 +22,7 @@ const (
 	MsgPort          messageID = 9
 )
 
-// Message m
+// Message stores ID and payload of a message
 type Message struct {
 	ID      messageID
 	Payload []byte
@@ -30,6 +30,7 @@ type Message struct {
 
 // Serialize serializes a message into a buffer of the form
 // <length prefix><message ID><payload>
+// Interprets `nil` as a keep-alive message
 func (m *Message) Serialize() []byte {
 	if m == nil {
 		return make([]byte, 4)
