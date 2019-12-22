@@ -51,18 +51,14 @@ func (tr *Tracker) buildTrackerURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	infoHash, err := tr.Torrent.Info.hash()
-	if err != nil {
-		return "", err
-	}
 	params := url.Values{
-		"info_hash":  []string{string(infoHash)},
+		"info_hash":  []string{string(tr.Torrent.InfoHash)},
 		"peer_id":    []string{string(tr.PeerID)},
 		"port":       []string{strconv.Itoa(int(tr.Port))},
 		"uploaded":   []string{"0"},
 		"downloaded": []string{"0"},
 		"compact":    []string{"1"},
-		"left":       []string{strconv.Itoa(tr.Torrent.Info.Length)},
+		"left":       []string{strconv.Itoa(tr.Torrent.Length)},
 	}
 	base.RawQuery = params.Encode()
 	return base.String(), nil
