@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSerialize(t *testing.T) {
+func TestMessageSerialize(t *testing.T) {
 	tests := map[string]struct {
 		input  *Message
 		output []byte
@@ -28,13 +28,13 @@ func TestSerialize(t *testing.T) {
 	}
 }
 
-func TestRead(t *testing.T) {
+func TestReadMessage(t *testing.T) {
 	tests := map[string]struct {
 		input  []byte
 		output *Message
 		fails  bool
 	}{
-		"parse normal message intro struct": {
+		"parse normal message into struct": {
 			input:  []byte{0, 0, 0, 5, 4, 1, 2, 3, 4},
 			output: &Message{ID: MsgHave, Payload: []byte{1, 2, 3, 4}},
 			fails:  false,
@@ -58,7 +58,7 @@ func TestRead(t *testing.T) {
 
 	for _, test := range tests {
 		reader := bytes.NewReader(test.input)
-		m, err := Read(reader)
+		m, err := ReadMessage(reader)
 		if test.fails {
 			assert.NotNil(t, err)
 		} else {
@@ -68,7 +68,7 @@ func TestRead(t *testing.T) {
 	}
 }
 
-func TestString(t *testing.T) {
+func TestMessageString(t *testing.T) {
 	tests := []struct {
 		input  *Message
 		output string
