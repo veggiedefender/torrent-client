@@ -6,15 +6,14 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
+	"net"
 
 	"github.com/jackpal/bencode-go"
+	"github.com/veggiedefender/torrent-client/p2p"
 )
 
 // Port to listen on
 const Port uint16 = 6881
-
-// A PeerID is a 20 byte unique identifier presented to trackers and peers
-type PeerID [20]byte
 
 // Torrent encodes the metadata from a .torrent file
 type Torrent struct {
@@ -40,14 +39,23 @@ type bencodeTorrent struct {
 
 // Download downloads a torrent
 func (t *Torrent) Download() error {
-	peerID := PeerID{}
+	var peerID [20]byte
 	_, err := rand.Read(peerID[:])
 	if err != nil {
 		return err
 	}
 
-	peers, err := t.getPeers(peerID, Port)
-	fmt.Println(peers)
+	// peers, err := t.getPeers(peerID, Port)
+	// fmt.Println(peers)
+	localhost := p2p.Peer{
+		IP:   net.IP{127, 0, 0, 1},
+		Port: 51413,
+	}
+	err = p2p.Connect(&localhost, peerID, t.InfoHash)
+	if err != nil {
+		return nil
+	}
+
 	return nil
 }
 

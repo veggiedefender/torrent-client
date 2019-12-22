@@ -3,15 +3,13 @@ package message
 import (
 	"errors"
 	"io"
-
-	"github.com/veggiedefender/torrent-client/torrent"
 )
 
 // A Handshake is a sequence of bytes a peer uses to identify itself
 type Handshake struct {
 	Pstr     string
 	InfoHash [20]byte
-	PeerID   torrent.PeerID
+	PeerID   [20]byte
 }
 
 // Serialize serializes the handshake to a buffer
@@ -47,8 +45,7 @@ func ReadHandshake(r io.Reader) (*Handshake, error) {
 		return nil, err
 	}
 
-	var infoHash [20]byte
-	var peerID torrent.PeerID
+	var infoHash, peerID [20]byte
 
 	copy(infoHash[:], handshakeBuf[pstrlen+8:pstrlen+8+20])
 	copy(peerID[:], handshakeBuf[pstrlen+8+20:])
