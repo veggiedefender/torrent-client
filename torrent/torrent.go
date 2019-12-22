@@ -13,10 +13,13 @@ import (
 // Port to listen on
 const Port uint16 = 6881
 
+// A PeerID is a 20 byte unique identifier presented to trackers and peers
+type PeerID [20]byte
+
 // Torrent encodes the metadata from a .torrent file
 type Torrent struct {
 	Announce    string
-	InfoHash    []byte
+	InfoHash    [20]byte
 	PieceHashes [][]byte
 	PieceLength int
 	Length      int
@@ -37,8 +40,8 @@ type bencodeTorrent struct {
 
 // Download downloads a torrent
 func (t *Torrent) Download() error {
-	peerID := make([]byte, 20)
-	_, err := rand.Read(peerID)
+	peerID := PeerID{}
+	_, err := rand.Read(peerID[:])
 	if err != nil {
 		return err
 	}
@@ -62,14 +65,14 @@ func Open(r io.Reader) (*Torrent, error) {
 	return t, nil
 }
 
-func (i *bencodeInfo) hash() ([]byte, error) {
+func (i *bencodeInfo) hash() ([20]byte, error) {
 	var buf bytes.Buffer
 	err := bencode.Marshal(&buf, *i)
 	if err != nil {
-		return nil, err
+		return [20]byte{}, err
 	}
 	h := sha1.Sum(buf.Bytes())
-	return h[:], nil
+	return h, nil
 }
 
 func (i *bencodeInfo) splitPieceHashes() ([][]byte, error) {

@@ -38,14 +38,14 @@ func parsePeers(peersBin string) ([]Peer, error) {
 	return peers, nil
 }
 
-func (t *Torrent) buildTrackerURL(peerID []byte, port uint16) (string, error) {
+func (t *Torrent) buildTrackerURL(peerID PeerID, port uint16) (string, error) {
 	base, err := url.Parse(t.Announce)
 	if err != nil {
 		return "", err
 	}
 	params := url.Values{
-		"info_hash":  []string{string(t.InfoHash)},
-		"peer_id":    []string{string(peerID)},
+		"info_hash":  []string{string(t.InfoHash[:])},
+		"peer_id":    []string{string(peerID[:])},
 		"port":       []string{strconv.Itoa(int(Port))},
 		"uploaded":   []string{"0"},
 		"downloaded": []string{"0"},
@@ -56,7 +56,7 @@ func (t *Torrent) buildTrackerURL(peerID []byte, port uint16) (string, error) {
 	return base.String(), nil
 }
 
-func (t *Torrent) getPeers(peerID []byte, port uint16) ([]Peer, error) {
+func (t *Torrent) getPeers(peerID PeerID, port uint16) ([]Peer, error) {
 	url, err := t.buildTrackerURL(peerID, port)
 	if err != nil {
 		return nil, err
