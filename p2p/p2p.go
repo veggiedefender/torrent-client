@@ -13,10 +13,9 @@ type Peer struct {
 
 // Downloader holds data required to download a torrent from a list of peers
 type Downloader struct {
-	Peers       []Peer
-	InfoHash    [20]byte
-	PieceLength int
-	Length      int
+	Peers    []Peer
+	InfoHash [20]byte
+	Length   int
 }
 
 // Download downloads a torrent
