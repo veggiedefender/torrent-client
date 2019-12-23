@@ -19,7 +19,7 @@ const Port uint16 = 6881
 type Torrent struct {
 	Announce    string
 	InfoHash    [20]byte
-	PieceHashes [][]byte
+	PieceHashes [][20]byte
 	PieceLength int
 	Length      int
 	Name        string
@@ -83,7 +83,7 @@ func (i *bencodeInfo) hash() ([20]byte, error) {
 	return h, nil
 }
 
-func (i *bencodeInfo) splitPieceHashes() ([][]byte, error) {
+func (i *bencodeInfo) splitPieceHashes() ([][20]byte, error) {
 	hashLen := 20 // Length of SHA-1 hash
 	buf := []byte(i.Pieces)
 	if len(buf)%hashLen != 0 {
@@ -91,10 +91,10 @@ func (i *bencodeInfo) splitPieceHashes() ([][]byte, error) {
 		return nil, err
 	}
 	numHashes := len(buf) / hashLen
-	hashes := make([][]byte, numHashes)
+	hashes := make([][20]byte, numHashes)
 
 	for i := 0; i < numHashes; i++ {
-		hashes[i] = buf[i*hashLen : (i+1)*hashLen]
+		copy(hashes[i][:], buf[i*hashLen:(i+1)*hashLen])
 	}
 	return hashes, nil
 }
