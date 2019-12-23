@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"crypto/sha1"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -34,10 +33,11 @@ func (d *Downloader) Download() error {
 	if err != nil {
 		return err
 	}
-	_, err = d.handshake(conn)
+	h, err := d.handshake(conn)
 	if err != nil {
 		return err
 	}
+	fmt.Println(h)
 
 	choked := false
 	pieceSize := d.Length / len(d.PieceHashes)
@@ -49,15 +49,23 @@ func (d *Downloader) Download() error {
 			return err
 		}
 
+		if msg.ID != message.MsgPiece {
+			fmt.Println(msg.String())
+		} else {
+			fmt.Println("Received", len(msg.Payload), "bytes")
+		}
+
 		switch msg.ID {
 		case message.MsgChoke:
 			choked = true
 		case message.MsgUnchoke:
 			choked = false
 		case message.MsgPiece:
-			begin := binary.BigEndian.Uint32(msg.Payload[4:8])
-			copy(buf[begin:], msg.Payload[8:])
-			i += (len(msg.Payload) - 8)
+			n, err := message.ParsePiece(0, buf, msg)
+			if err != nil {
+				return err
+			}
+			i += n
 		}
 
 		if !choked {
@@ -66,15 +74,7 @@ func (d *Downloader) Download() error {
 			remain := pieceSize - i
 			length := int(math.Min(float64(16384), float64(pieceSize)))
 			length = int(math.Min(float64(remain), float64(length)))
-			payload := make([]byte, 12)
-			binary.BigEndian.PutUint32(payload[0:4], uint32(index))
-			binary.BigEndian.PutUint32(payload[4:8], uint32(begin))
-			binary.BigEndian.PutUint32(payload[8:12], uint32(length))
-			request := message.Message{
-				ID:      message.MsgRequest,
-				Payload: payload,
-			}
-			_, err := conn.Write(request.Serialize())
+			_, err := conn.Write(message.FormatRequest(index, begin, length).Serialize())
 			if err != nil {
 				return err
 			}
@@ -82,8 +82,9 @@ func (d *Downloader) Download() error {
 	}
 
 	s := sha1.Sum(buf)
-	fmt.Println(hex.EncodeToString(s[:]))
-	fmt.Println(hex.EncodeToString(d.PieceHashes[0][:]))
+	fmt.Printf("Downloaded %d bytes.\n", len(buf))
+	fmt.Printf("Got SHA1\t%s\n", hex.EncodeToString(s[:]))
+	fmt.Printf("Expected\t%s\n", hex.EncodeToString(d.PieceHashes[0][:]))
 
 	return nil
 }

@@ -18,5 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	t.Download()
+	err = t.Download()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
