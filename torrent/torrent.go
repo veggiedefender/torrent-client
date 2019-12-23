@@ -54,7 +54,7 @@ func (t *Torrent) Download() error {
 		PieceLength: t.PieceLength,
 		Length:      t.Length,
 	}
-	err := downloader.Download()
+	err = downloader.Download()
 	return err
 }
 
