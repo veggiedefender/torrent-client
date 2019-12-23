@@ -47,16 +47,15 @@ func (t *Torrent) Download() error {
 
 	// peers, err := t.getPeers(peerID, Port)
 	// fmt.Println(peers)
-	localhost := p2p.Peer{
-		IP:   net.IP{127, 0, 0, 1},
-		Port: 51413,
+	peers := []p2p.Peer{{IP: net.IP{127, 0, 0, 1}, Port: 51413}}
+	downloader := p2p.Downloader{
+		Peers:       peers,
+		InfoHash:    t.InfoHash,
+		PieceLength: t.PieceLength,
+		Length:      t.Length,
 	}
-	err = p2p.Connect(&localhost, peerID, t.InfoHash)
-	if err != nil {
-		return nil
-	}
-
-	return nil
+	err := downloader.Download()
+	return err
 }
 
 // Open parses a torrent file
