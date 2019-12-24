@@ -100,11 +100,7 @@ func (p *Peer) connect(peerID [20]byte, infoHash [20]byte) (net.Conn, error) {
 }
 
 func (d *Downloader) handshake(conn net.Conn) (*handshake.Handshake, error) {
-	req := handshake.Handshake{
-		Pstr:     "BitTorrent protocol",
-		InfoHash: d.InfoHash,
-		PeerID:   d.PeerID,
-	}
+	req := handshake.New(d.InfoHash, d.PeerID)
 	_, err := conn.Write(req.Serialize())
 	if err != nil {
 		return nil, err
