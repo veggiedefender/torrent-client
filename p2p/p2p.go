@@ -8,6 +8,7 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/veggiedefender/torrent-client/handshake"
 	"github.com/veggiedefender/torrent-client/message"
 )
 
@@ -44,7 +45,7 @@ func (d *Downloader) Download() error {
 	buf := make([]byte, pieceSize)
 	i := 0
 	for i < pieceSize {
-		msg, err := message.ReadMessage(conn)
+		msg, err := message.Read(conn)
 		if err != nil {
 			return err
 		}
@@ -98,8 +99,8 @@ func (p *Peer) connect(peerID [20]byte, infoHash [20]byte) (net.Conn, error) {
 	return conn, nil
 }
 
-func (d *Downloader) handshake(conn net.Conn) (*message.Handshake, error) {
-	req := message.Handshake{
+func (d *Downloader) handshake(conn net.Conn) (*handshake.Handshake, error) {
+	req := handshake.Handshake{
 		Pstr:     "BitTorrent protocol",
 		InfoHash: d.InfoHash,
 		PeerID:   d.PeerID,
@@ -109,7 +110,7 @@ func (d *Downloader) handshake(conn net.Conn) (*message.Handshake, error) {
 		return nil, err
 	}
 
-	res, err := message.ReadHandshake(conn)
+	res, err := handshake.Read(conn)
 	if err != nil {
 		return nil, err
 	}

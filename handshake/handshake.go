@@ -1,4 +1,4 @@
-package message
+package handshake
 
 import (
 	"errors"
@@ -25,8 +25,8 @@ func (h *Handshake) Serialize() []byte {
 	return buf
 }
 
-// ReadHandshake parses a message from a stream. Returns `nil` on keep-alive message
-func ReadHandshake(r io.Reader) (*Handshake, error) {
+// Read parses a message from a stream. Returns `nil` on keep-alive message
+func Read(r io.Reader) (*Handshake, error) {
 	lengthBuf := make([]byte, 1)
 	_, err := io.ReadFull(r, lengthBuf)
 	if err != nil {

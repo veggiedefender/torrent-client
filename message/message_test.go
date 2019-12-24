@@ -129,7 +129,7 @@ func TestParsePiece(t *testing.T) {
 	}
 }
 
-func TestMessageSerialize(t *testing.T) {
+func TestSerialize(t *testing.T) {
 	tests := map[string]struct {
 		input  *Message
 		output []byte
@@ -150,7 +150,7 @@ func TestMessageSerialize(t *testing.T) {
 	}
 }
 
-func TestReadMessage(t *testing.T) {
+func TestRead(t *testing.T) {
 	tests := map[string]struct {
 		input  []byte
 		output *Message
@@ -180,7 +180,7 @@ func TestReadMessage(t *testing.T) {
 
 	for _, test := range tests {
 		reader := bytes.NewReader(test.input)
-		m, err := ReadMessage(reader)
+		m, err := Read(reader)
 		if test.fails {
 			assert.NotNil(t, err)
 		} else {
@@ -190,7 +190,7 @@ func TestReadMessage(t *testing.T) {
 	}
 }
 
-func TestMessageString(t *testing.T) {
+func TestString(t *testing.T) {
 	tests := []struct {
 		input  *Message
 		output string

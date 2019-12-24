@@ -1,4 +1,4 @@
-package message
+package handshake
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHandshakeSerialize(t *testing.T) {
+func TestSerialize(t *testing.T) {
 	tests := map[string]struct {
 		input  *Handshake
 		output []byte
@@ -28,7 +28,7 @@ func TestHandshakeSerialize(t *testing.T) {
 	}
 }
 
-func TestReadHandshake(t *testing.T) {
+func TestRead(t *testing.T) {
 	tests := map[string]struct {
 		input  []byte
 		output *Handshake
@@ -62,7 +62,7 @@ func TestReadHandshake(t *testing.T) {
 
 	for _, test := range tests {
 		reader := bytes.NewReader(test.input)
-		m, err := ReadHandshake(reader)
+		m, err := Read(reader)
 		if test.fails {
 			assert.NotNil(t, err)
 		} else {
