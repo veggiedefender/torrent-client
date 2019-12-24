@@ -29,10 +29,10 @@ type Downloader struct {
 // Download downloads a torrent
 func (d *Downloader) Download() error {
 	conn, err := d.Peers[0].connect(d.PeerID, d.InfoHash)
-	defer conn.Close()
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 	h, err := d.handshake(conn)
 	if err != nil {
 		return err
