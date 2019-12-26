@@ -196,17 +196,17 @@ func TestString(t *testing.T) {
 		output string
 	}{
 		{nil, "KeepAlive"},
-		{&Message{MsgChoke, []byte{1, 2, 3}}, "Choke\t[01 02 03]"},
-		{&Message{MsgUnchoke, []byte{1, 2, 3}}, "Unchoke\t[01 02 03]"},
-		{&Message{MsgInterested, []byte{1, 2, 3}}, "Interested\t[01 02 03]"},
-		{&Message{MsgNotInterested, []byte{1, 2, 3}}, "NotInterested\t[01 02 03]"},
-		{&Message{MsgHave, []byte{1, 2, 3}}, "Have\t[01 02 03]"},
-		{&Message{MsgBitfield, []byte{1, 2, 3}}, "Bitfield\t[01 02 03]"},
-		{&Message{MsgRequest, []byte{1, 2, 3}}, "Request\t[01 02 03]"},
-		{&Message{MsgPiece, []byte{1, 2, 3}}, "Piece\t[01 02 03]"},
-		{&Message{MsgCancel, []byte{1, 2, 3}}, "Cancel\t[01 02 03]"},
-		{&Message{MsgPort, []byte{1, 2, 3}}, "Port\t[01 02 03]"},
-		{&Message{99, []byte{1, 2, 3}}, "Unknown#99\t[01 02 03]"},
+		{&Message{MsgChoke, []byte{1, 2, 3}}, "Choke"},
+		{&Message{MsgUnchoke, []byte{1, 2, 3}}, "Unchoke"},
+		{&Message{MsgInterested, []byte{1, 2, 3}}, "Interested"},
+		{&Message{MsgNotInterested, []byte{1, 2, 3}}, "NotInterested"},
+		{&Message{MsgHave, []byte{1, 2, 3}}, "Have"},
+		{&Message{MsgBitfield, []byte{1, 2, 3}}, "Bitfield"},
+		{&Message{MsgRequest, []byte{1, 2, 3}}, "Request"},
+		{&Message{MsgPiece, []byte{1, 2, 3}}, "Piece"},
+		{&Message{MsgCancel, []byte{1, 2, 3}}, "Cancel"},
+		{&Message{MsgPort, []byte{1, 2, 3}}, "Port"},
+		{&Message{99, []byte{1, 2, 3}}, "Unknown#99"},
 	}
 
 	for _, test := range tests {

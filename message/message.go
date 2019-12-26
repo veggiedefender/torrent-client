@@ -116,38 +116,35 @@ func (m *Message) String() string {
 		return "KeepAlive"
 	}
 
-	var idName string
 	switch m.ID {
 	case MsgChoke:
-		idName = "Choke"
+		return "Choke"
 	case MsgUnchoke:
-		idName = "Unchoke"
+		return "Unchoke"
 	case MsgInterested:
-		idName = "Interested"
+		return "Interested"
 	case MsgNotInterested:
-		idName = "NotInterested"
+		return "NotInterested"
 	case MsgHave:
-		idName = "Have"
+		return "Have"
 	case MsgBitfield:
-		idName = "Bitfield"
+		return "Bitfield"
 	case MsgRequest:
-		idName = "Request"
+		return "Request"
 	case MsgPiece:
-		idName = "Piece"
+		return "Piece"
 	case MsgCancel:
-		idName = "Cancel"
+		return "Cancel"
 	case MsgPort:
-		idName = "Port"
+		return "Port"
 	default:
-		idName = fmt.Sprintf("Unknown#%d", m.ID)
+		return fmt.Sprintf("Unknown#%d", m.ID)
 	}
-
-	return fmt.Sprintf("%s\t[% x]", idName, m.Payload)
 }
 
 // HasPiece tells if a bitfield has a particular index set
-func (b Bitfield) HasPiece(index int) bool {
+func (bf Bitfield) HasPiece(index int) bool {
 	byteIndex := index / 8
 	offset := index % 8
-	return b[byteIndex]>>(7-offset)&1 > 0
+	return bf[byteIndex]>>(7-offset)&1 != 0
 }
