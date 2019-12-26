@@ -29,6 +29,9 @@ type Message struct {
 	Payload []byte
 }
 
+// A Bitfield represents the pieces that a peer has
+type Bitfield []byte
+
 // FormatRequest formats the ID and payload for a request message
 func FormatRequest(index, begin, length int) *Message {
 	payload := make([]byte, 12)
@@ -44,7 +47,7 @@ func FormatRequest(index, begin, length int) *Message {
 // ParsePiece parses a piece message and copies its payload into a buffer
 func ParsePiece(index int, buf []byte, msg *Message) (int, error) {
 	if msg.ID != MsgPiece {
-		return 0, fmt.Errorf("Expected ID %d, got ID %d", MsgPiece, msg.ID)
+		return 0, fmt.Errorf("Expected piece (ID %d), got ID %d", MsgPiece, msg.ID)
 	}
 	if len(msg.Payload) < 8 {
 		return 0, errors.New("Payload too short")
@@ -140,4 +143,11 @@ func (m *Message) String() string {
 	}
 
 	return fmt.Sprintf("%s\t[% x]", idName, m.Payload)
+}
+
+// HasPiece tells if a bitfield has a particular index set
+func (b Bitfield) HasPiece(index int) bool {
+	byteIndex := index / 8
+	offset := index % 8
+	return b[byteIndex]>>(7-offset)&1 > 0
 }
