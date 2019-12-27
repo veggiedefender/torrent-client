@@ -6,7 +6,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
-	"net"
 
 	"github.com/jackpal/bencode-go"
 	"github.com/veggiedefender/torrent-client/p2p"
@@ -38,15 +37,15 @@ type bencodeTorrent struct {
 }
 
 // Download downloads a torrent
-func (t *Torrent) Download() error {
+func (t *Torrent) Download() ([]byte, error) {
 	var peerID [20]byte
 	_, err := rand.Read(peerID[:])
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// peers, err := t.getPeers(peerID, Port)
-	peers := []p2p.Peer{{IP: net.IP{127, 0, 0, 1}, Port: 51413}}
+	peers, err := t.getPeers(peerID, Port)
+	// peers := []p2p.Peer{{IP: net.IP{127, 0, 0, 1}, Port: 51413}}
 	downloader := p2p.Download{
 		Peers:       peers,
 		PeerID:      peerID,
@@ -54,8 +53,11 @@ func (t *Torrent) Download() error {
 		PieceHashes: t.PieceHashes,
 		Length:      t.Length,
 	}
-	err = downloader.Download()
-	return err
+	buf, err := downloader.Download()
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
 }
 
 // Open parses a torrent file

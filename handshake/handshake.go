@@ -1,6 +1,7 @@
 package handshake
 
 import (
+	"bufio"
 	"errors"
 	"io"
 )
@@ -35,7 +36,7 @@ func (h *Handshake) Serialize() []byte {
 }
 
 // Read parses a message from a stream. Returns `nil` on keep-alive message
-func Read(r io.Reader) (*Handshake, error) {
+func Read(r *bufio.Reader) (*Handshake, error) {
 	lengthBuf := make([]byte, 1)
 	_, err := io.ReadFull(r, lengthBuf)
 	if err != nil {

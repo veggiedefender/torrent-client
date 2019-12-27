@@ -1,6 +1,7 @@
 package message
 
 import (
+	"bufio"
 	"bytes"
 	"testing"
 
@@ -179,7 +180,7 @@ func TestRead(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		reader := bytes.NewReader(test.input)
+		reader := bufio.NewReader(bytes.NewReader(test.input))
 		m, err := Read(reader)
 		if test.fails {
 			assert.NotNil(t, err)

@@ -8,17 +8,30 @@ import (
 )
 
 func main() {
-	file, err := os.Open(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
+	inPath := os.Args[1]
+	outPath := os.Args[2]
 
-	t, err := torrent.Open(file)
+	inFile, err := os.Open(inPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = t.Download()
+	defer inFile.Close()
+
+	t, err := torrent.Open(inFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	buf, err := t.Download()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	outFile, err := os.Create(outPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer outFile.Close()
+	_, err = outFile.Write(buf)
 	if err != nil {
 		log.Fatal(err)
 	}
