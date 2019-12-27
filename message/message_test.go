@@ -21,6 +21,15 @@ func TestFormatRequest(t *testing.T) {
 	assert.Equal(t, expected, msg)
 }
 
+func TestFormatHave(t *testing.T) {
+	msg := FormatHave(4)
+	expected := &Message{
+		ID:      MsgHave,
+		Payload: []byte{0x00, 0x00, 0x00, 0x04},
+	}
+	assert.Equal(t, expected, msg)
+}
+
 func TestParsePiece(t *testing.T) {
 	tests := map[string]struct {
 		inputIndex int
@@ -130,6 +139,45 @@ func TestParsePiece(t *testing.T) {
 	}
 }
 
+func TestParseHave(t *testing.T) {
+	tests := map[string]struct {
+		input  *Message
+		output int
+		fails  bool
+	}{
+		"parse valid message": {
+			input:  &Message{ID: MsgHave, Payload: []byte{0x00, 0x00, 0x00, 0x04}},
+			output: 4,
+			fails:  false,
+		},
+		"wrong message type": {
+			input:  &Message{ID: MsgPiece, Payload: []byte{0x00, 0x00, 0x00, 0x04}},
+			output: 0,
+			fails:  true,
+		},
+		"payload too short": {
+			input:  &Message{ID: MsgHave, Payload: []byte{0x00, 0x00, 0x04}},
+			output: 0,
+			fails:  true,
+		},
+		"payload too long": {
+			input:  &Message{ID: MsgHave, Payload: []byte{0x00, 0x00, 0x00, 0x00, 0x04}},
+			output: 0,
+			fails:  true,
+		},
+	}
+
+	for _, test := range tests {
+		index, err := ParseHave(test.input)
+		if test.fails {
+			assert.NotNil(t, err)
+		} else {
+			assert.Nil(t, err)
+		}
+		assert.Equal(t, test.output, index)
+	}
+}
+
 func TestSerialize(t *testing.T) {
 	tests := map[string]struct {
 		input  *Message
@@ -221,5 +269,34 @@ func TestHasPiece(t *testing.T) {
 	outputs := []bool{false, true, false, true, false, true, false, false, false, true, false, true, false, true, false, false}
 	for i := 0; i < len(outputs); i++ {
 		assert.Equal(t, outputs[i], bf.HasPiece(i))
+	}
+}
+
+func TestSetPiece(t *testing.T) {
+	tests := []struct {
+		input Bitfield
+		index int
+		outpt Bitfield
+	}{
+		{
+			input: Bitfield{0b01010100, 0b01010100},
+			index: 4,
+			outpt: Bitfield{0b01011100, 0b01010100},
+		},
+		{
+			input: Bitfield{0b01010100, 0b01010100},
+			index: 9,
+			outpt: Bitfield{0b01010100, 0b01010100},
+		},
+		{
+			input: Bitfield{0b01010100, 0b01010100},
+			index: 15,
+			outpt: Bitfield{0b01010100, 0b01010101},
+		},
+	}
+	for _, test := range tests {
+		bf := test.input
+		bf.SetPiece(test.index)
+		assert.Equal(t, test.outpt, bf)
 	}
 }

@@ -33,22 +33,26 @@ type Message struct {
 // A Bitfield represents the pieces that a peer has
 type Bitfield []byte
 
-// FormatRequest formats the ID and payload for a request message
+// FormatRequest creates a REQUEST message
 func FormatRequest(index, begin, length int) *Message {
 	payload := make([]byte, 12)
 	binary.BigEndian.PutUint32(payload[0:4], uint32(index))
 	binary.BigEndian.PutUint32(payload[4:8], uint32(begin))
 	binary.BigEndian.PutUint32(payload[8:12], uint32(length))
-	return &Message{
-		ID:      MsgRequest,
-		Payload: payload,
-	}
+	return &Message{ID: MsgRequest, Payload: payload}
 }
 
-// ParsePiece parses a piece message and copies its payload into a buffer
+// FormatHave creates a HAVE message
+func FormatHave(index int) *Message {
+	payload := make([]byte, 4)
+	binary.BigEndian.PutUint32(payload, uint32(index))
+	return &Message{ID: MsgHave, Payload: payload}
+}
+
+// ParsePiece parses a PIECE message and copies its payload into a buffer
 func ParsePiece(index int, buf []byte, msg *Message) (int, error) {
 	if msg.ID != MsgPiece {
-		return 0, fmt.Errorf("Expected piece (ID %d), got ID %d", MsgPiece, msg.ID)
+		return 0, fmt.Errorf("Expected PIECE (ID %d), got ID %d", MsgPiece, msg.ID)
 	}
 	if len(msg.Payload) < 8 {
 		return 0, errors.New("Payload too short")
@@ -67,6 +71,18 @@ func ParsePiece(index int, buf []byte, msg *Message) (int, error) {
 	}
 	copy(buf[begin:], data)
 	return len(data), nil
+}
+
+// ParseHave parses a HAVE message
+func ParseHave(msg *Message) (int, error) {
+	if msg.ID != MsgHave {
+		return 0, fmt.Errorf("Expected HAVE (ID %d), got ID %d", MsgHave, msg.ID)
+	}
+	if len(msg.Payload) != 4 {
+		return 0, fmt.Errorf("Expected payload length 4, got length %d", len(msg.Payload))
+	}
+	index := int(binary.BigEndian.Uint32(msg.Payload))
+	return index, nil
 }
 
 // Serialize serializes a message into a buffer of the form
@@ -147,4 +163,11 @@ func (bf Bitfield) HasPiece(index int) bool {
 	byteIndex := index / 8
 	offset := index % 8
 	return bf[byteIndex]>>(7-offset)&1 != 0
+}
+
+// SetPiece sets a bit in the bitfield
+func (bf Bitfield) SetPiece(index int) {
+	byteIndex := index / 8
+	offset := index % 8
+	bf[byteIndex] |= 1 << (7 - offset)
 }

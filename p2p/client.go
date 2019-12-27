@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"bufio"
-	"encoding/binary"
 	"fmt"
 	"net"
 	"strconv"
@@ -125,9 +124,7 @@ func (c *client) unchoke() error {
 }
 
 func (c *client) have(index int) error {
-	pl := make([]byte, 4)
-	binary.BigEndian.PutUint32(pl, uint32(index))
-	msg := message.Message{ID: message.MsgHave, Payload: pl}
+	msg := message.FormatHave(index)
 	_, err := c.conn.Write(msg.Serialize())
 	return err
 }
