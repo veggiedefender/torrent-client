@@ -20,7 +20,6 @@ type client struct {
 	reader   *bufio.Reader
 	bitfield message.Bitfield
 	choked   bool
-	engaged  bool
 }
 
 func completeHandshake(conn net.Conn, r *bufio.Reader, infohash, peerID [20]byte) (*handshake.Handshake, error) {
@@ -66,11 +65,13 @@ func newClient(peer Peer, peerID, infoHash [20]byte) (*client, error) {
 
 	_, err = completeHandshake(conn, reader, infoHash, peerID)
 	if err != nil {
+		conn.Close()
 		return nil, err
 	}
 
 	bf, err := recvBitfield(conn, reader)
 	if err != nil {
+		conn.Close()
 		return nil, err
 	}
 
@@ -82,7 +83,6 @@ func newClient(peer Peer, peerID, infoHash [20]byte) (*client, error) {
 		reader:   reader,
 		bitfield: bf,
 		choked:   true,
-		engaged:  false,
 	}, nil
 }
 

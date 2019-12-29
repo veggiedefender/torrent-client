@@ -1,4 +1,4 @@
-package torrent
+package torrentfile
 
 import (
 	"bytes"
@@ -14,8 +14,8 @@ import (
 // Port to listen on
 const Port uint16 = 6881
 
-// Torrent encodes the metadata from a .torrent file
-type Torrent struct {
+// TorrentFile encodes the metadata from a .torrent file
+type TorrentFile struct {
 	Announce    string
 	InfoHash    [20]byte
 	PieceHashes [][20]byte
@@ -37,7 +37,7 @@ type bencodeTorrent struct {
 }
 
 // Download downloads a torrent
-func (t *Torrent) Download() ([]byte, error) {
+func (t *TorrentFile) Download() ([]byte, error) {
 	var peerID [20]byte
 	_, err := rand.Read(peerID[:])
 	if err != nil {
@@ -47,14 +47,14 @@ func (t *Torrent) Download() ([]byte, error) {
 	peers, err := t.getPeers(peerID, Port)
 	// peers = append(peers, p2p.Peer{IP: net.IP{127, 0, 0, 1}, Port: 51413})
 	// peers := []p2p.Peer{{IP: net.IP{127, 0, 0, 1}, Port: 51413}}
-	downloader := p2p.Download{
+	torrent := p2p.Torrent{
 		Peers:       peers,
 		PeerID:      peerID,
 		InfoHash:    t.InfoHash,
 		PieceHashes: t.PieceHashes,
 		Length:      t.Length,
 	}
-	buf, err := downloader.Download()
+	buf, err := torrent.Download()
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (t *Torrent) Download() ([]byte, error) {
 }
 
 // Open parses a torrent file
-func Open(r io.Reader) (*Torrent, error) {
+func Open(r io.Reader) (*TorrentFile, error) {
 	bto := bencodeTorrent{}
 	err := bencode.Unmarshal(r, &bto)
 	if err != nil {
@@ -101,7 +101,7 @@ func (i *bencodeInfo) splitPieceHashes() ([][20]byte, error) {
 	return hashes, nil
 }
 
-func (bto *bencodeTorrent) toTorrent() (*Torrent, error) {
+func (bto *bencodeTorrent) toTorrent() (*TorrentFile, error) {
 	infoHash, err := bto.Info.hash()
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func (bto *bencodeTorrent) toTorrent() (*Torrent, error) {
 	if err != nil {
 		return nil, err
 	}
-	t := Torrent{
+	t := TorrentFile{
 		Announce:    bto.Announce,
 		InfoHash:    infoHash,
 		PieceHashes: pieceHashes,

@@ -128,7 +128,7 @@ func Read(r *bufio.Reader) (*Message, error) {
 	return &m, nil
 }
 
-func (m *Message) String() string {
+func (m *Message) name() string {
 	if m == nil {
 		return "KeepAlive"
 	}
@@ -156,6 +156,13 @@ func (m *Message) String() string {
 	default:
 		return fmt.Sprintf("Unknown#%d", m.ID)
 	}
+}
+
+func (m *Message) String() string {
+	if m == nil {
+		return m.name()
+	}
+	return fmt.Sprintf("%s [%d]", m.name(), len(m.Payload))
 }
 
 // HasPiece tells if a bitfield has a particular index set

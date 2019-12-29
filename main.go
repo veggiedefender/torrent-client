@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/veggiedefender/torrent-client/torrent"
+	"github.com/veggiedefender/torrent-client/torrentfile"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	}
 	defer inFile.Close()
 
-	t, err := torrent.Open(inFile)
+	t, err := torrentfile.Open(inFile)
 	if err != nil {
 		log.Fatal(err)
 	}
