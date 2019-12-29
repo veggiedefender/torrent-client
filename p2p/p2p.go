@@ -194,7 +194,8 @@ func (t *Torrent) Download() ([]byte, error) {
 		donePieces++
 
 		percent := float64(donePieces) / float64(len(t.PieceHashes)) * 100
-		log.Printf("(%0.2f%%) Downloaded piece #%d with %d goroutines\n", percent, res.index, runtime.NumGoroutine())
+		numWorkers := runtime.NumGoroutine() - 1 // subtract 1 for main thread
+		log.Printf("(%0.2f%%) Downloaded piece #%d with %d workers\n", percent, res.index, numWorkers)
 	}
 	close(workQueue)
 
