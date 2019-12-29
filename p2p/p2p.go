@@ -12,7 +12,7 @@ import (
 )
 
 const maxBlockSize = 16384
-const maxUnfulfilled = 5
+const maxBacklog = 5
 
 // Peer encodes connection information for a peer
 type Peer struct {
@@ -40,6 +40,82 @@ type pieceResult struct {
 	buf   []byte
 }
 
+type downloadState struct {
+	index      int
+	client     *client
+	buf        []byte
+	downloaded int
+	backlog    int
+}
+
+func readMessage(state *downloadState) error {
+	msg, err := state.client.read() // this call blocks
+	if err != nil {
+		return err
+	}
+
+	if msg == nil { // keep-alive
+		return nil
+	}
+
+	switch msg.ID {
+	case message.MsgUnchoke:
+		state.client.choked = false
+	case message.MsgChoke:
+		state.client.choked = true
+	case message.MsgHave:
+		index, err := message.ParseHave(msg)
+		if err != nil {
+			return err
+		}
+		state.client.bitfield.SetPiece(index)
+	case message.MsgPiece:
+		n, err := message.ParsePiece(state.index, state.buf, msg)
+		if err != nil {
+			return err
+		}
+		state.downloaded += n
+		state.backlog--
+	}
+	return nil
+}
+
+func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
+	state := downloadState{
+		index:  pw.index,
+		client: c,
+		buf:    make([]byte, pw.length),
+	}
+
+	requested := 0
+	for state.downloaded < pw.length {
+		for c.hasNext() {
+			err := readMessage(&state)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if !c.choked && requested < pw.length && requested-state.downloaded <= maxBacklog+1 {
+			for i := 0; i < maxBacklog; i++ {
+				blockSize := maxBlockSize
+				if pw.length-requested < blockSize {
+					// Last block might be shorter than the typical block
+					blockSize = pw.length - requested
+				}
+				c.request(pw.index, requested, blockSize)
+				requested += blockSize
+			}
+		}
+
+		err := readMessage(&state)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return state.buf, nil
+}
+
 func checkIntegrity(pw *pieceWork, buf []byte) error {
 	hash := sha1.Sum(buf)
 	if !bytes.Equal(hash[:], pw.hash[:]) {
@@ -48,93 +124,14 @@ func checkIntegrity(pw *pieceWork, buf []byte) error {
 	return nil
 }
 
-func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
-	buf := make([]byte, pw.length)
-	downloaded := 0
-	requested := 0
-	for downloaded < len(buf) {
-		for c.hasNext() {
-			msg, err := c.read() // this call blocks
-			if err != nil {
-				return nil, err
-			}
-			if msg == nil { // keep-alive
-				continue
-			}
-			if msg.ID != message.MsgPiece {
-				log.Println(msg)
-			}
-			switch msg.ID {
-			case message.MsgUnchoke:
-				c.choked = false
-			case message.MsgChoke:
-				c.choked = true
-			case message.MsgHave:
-				index, err := message.ParseHave(msg)
-				if err != nil {
-					return nil, err
-				}
-				c.bitfield.SetPiece(index)
-			case message.MsgPiece:
-				n, err := message.ParsePiece(pw.index, buf, msg)
-				if err != nil {
-					return nil, err
-				}
-				downloaded += n
-			}
-		}
-
-		if !c.choked && requested < len(buf) && requested-downloaded <= maxUnfulfilled+1 {
-			for i := 0; i < maxUnfulfilled; i++ {
-				blockSize := maxBlockSize
-				if len(buf)-requested < blockSize {
-					// Last block might be shorter than the typical block
-					blockSize = len(buf) - requested
-				}
-				c.request(pw.index, requested, blockSize)
-				requested += blockSize
-			}
-		}
-
-		msg, err := c.read() // this call blocks
-		if err != nil {
-			return nil, err
-		}
-		if msg == nil { // keep-alive
-			continue
-		}
-		if msg.ID != message.MsgPiece {
-			log.Println(msg)
-		}
-		switch msg.ID {
-		case message.MsgUnchoke:
-			c.choked = false
-		case message.MsgChoke:
-			c.choked = true
-		case message.MsgHave:
-			index, err := message.ParseHave(msg)
-			if err != nil {
-				return nil, err
-			}
-			c.bitfield.SetPiece(index)
-		case message.MsgPiece:
-			n, err := message.ParsePiece(pw.index, buf, msg)
-			if err != nil {
-				return nil, err
-			}
-			downloaded += n
-		}
-	}
-	return buf, nil
-}
-
 func (t *Torrent) downloadWorker(peer Peer, workQueue chan *pieceWork, results chan *pieceResult) {
 	c, err := newClient(peer, t.PeerID, t.InfoHash)
 	if err != nil {
-		log.Printf("Peer %s unresponsive. Disconnecting\n", peer.IP)
+		log.Printf("Could not handshake with %s. Disconnecting\n", peer.IP)
 		return
 	}
 	defer c.conn.Close()
+	log.Printf("Completed handshake with %s\n", peer.IP)
 
 	c.unchoke()
 	c.interested()
