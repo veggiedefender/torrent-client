@@ -11,8 +11,11 @@ import (
 	"github.com/veggiedefender/torrent-client/message"
 )
 
-const maxBlockSize = 16384
-const maxBacklog = 5
+// MaxBlockSize is the largest number of bytes a request can ask for
+const MaxBlockSize = 16384
+
+// MaxBacklog is the number of unfulfilled requests a client can have in its pipeline
+const MaxBacklog = 5
 
 // Peer encodes connection information for a peer
 type Peer struct {
@@ -113,8 +116,8 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 		}
 
 		// Send requests until we have enough unfulfilled requests
-		for state.backlog < maxBacklog && state.requested < pw.length {
-			blockSize := maxBlockSize
+		for state.backlog < MaxBacklog && state.requested < pw.length {
+			blockSize := MaxBlockSize
 			// Last block might be shorter than the typical block
 			if pw.length-state.requested < blockSize {
 				blockSize = pw.length - state.requested
