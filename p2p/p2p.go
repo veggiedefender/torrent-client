@@ -55,8 +55,6 @@ func readMessage(state *downloadState) error {
 		return err
 	}
 
-	// log.Println(msg)
-
 	if msg == nil { // keep-alive
 		return nil
 	}
