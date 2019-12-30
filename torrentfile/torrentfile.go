@@ -45,7 +45,6 @@ func (t *TorrentFile) Download() ([]byte, error) {
 	}
 
 	peers, err := t.getPeers(peerID, Port)
-	// peers = append(peers, p2p.Peer{IP: net.IP{127, 0, 0, 1}, Port: 51413})
 	// peers := []p2p.Peer{{IP: net.IP{127, 0, 0, 1}, Port: 51413}}
 	torrent := p2p.Torrent{
 		Peers:       peers,
