@@ -108,7 +108,7 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 	}
 
 	// Setting a deadline helps get unresponsive peers unstuck.
-	// 30 seconds is more than enough time to download 16 Kb
+	// 30 seconds is more than enough time to download 16 KB
 	c.conn.SetDeadline(time.Now().Add(30 * time.Second))
 	defer c.conn.SetDeadline(time.Time{}) // Disable the deadline
 
