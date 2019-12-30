@@ -25,7 +25,7 @@ type client struct {
 }
 
 func completeHandshake(conn net.Conn, r *bufio.Reader, infohash, peerID [20]byte) (*handshake.Handshake, error) {
-	conn.SetDeadline(time.Now().Local().Add(3 * time.Second))
+	conn.SetDeadline(time.Now().Add(3 * time.Second))
 	defer conn.SetDeadline(time.Time{}) // Disable the deadline
 
 	req := handshake.New(infohash, peerID)
@@ -42,7 +42,7 @@ func completeHandshake(conn net.Conn, r *bufio.Reader, infohash, peerID [20]byte
 }
 
 func recvBitfield(conn net.Conn, r *bufio.Reader) (bitfield.Bitfield, error) {
-	conn.SetDeadline(time.Now().Local().Add(5 * time.Second))
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
 	defer conn.SetDeadline(time.Time{}) // Disable the deadline
 
 	msg, err := message.Read(r)
