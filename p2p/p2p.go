@@ -12,7 +12,7 @@ import (
 )
 
 const maxBlockSize = 16384
-const maxBacklog = 3
+const maxBacklog = 5
 
 // Peer encodes connection information for a peer
 type Peer struct {
