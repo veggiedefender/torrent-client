@@ -113,28 +113,22 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 	defer c.conn.SetDeadline(time.Time{}) // Disable the deadline
 
 	for state.downloaded < pw.length {
-		// Block and consume messages until not choked
-		if c.choked {
-			err := readMessages(&state)
-			if err != nil {
-				return nil, err
+		// If unchoked, send requests until we have enough unfulfilled requests
+		if !state.client.choked {
+			for state.backlog < MaxBacklog && state.requested < pw.length {
+				blockSize := MaxBlockSize
+				// Last block might be shorter than the typical block
+				if pw.length-state.requested < blockSize {
+					blockSize = pw.length - state.requested
+				}
+
+				c.request(pw.index, state.requested, blockSize)
+				state.backlog++
+				state.requested += blockSize
 			}
-			continue
 		}
 
-		// Send requests until we have enough unfulfilled requests
-		for state.backlog < MaxBacklog && state.requested < pw.length {
-			blockSize := MaxBlockSize
-			// Last block might be shorter than the typical block
-			if pw.length-state.requested < blockSize {
-				blockSize = pw.length - state.requested
-			}
-
-			c.request(pw.index, state.requested, blockSize)
-			state.backlog++
-			state.requested += blockSize
-		}
-
+		// Wait until we receive at least one message, and consume them
 		err := readMessages(&state)
 		if err != nil {
 			return nil, err
