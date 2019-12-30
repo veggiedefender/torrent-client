@@ -45,6 +45,7 @@ type downloadState struct {
 	client     *client
 	buf        []byte
 	downloaded int
+	requested  int
 	backlog    int
 }
 
@@ -82,6 +83,20 @@ func readMessage(state *downloadState) error {
 	return nil
 }
 
+func readMessages(state *downloadState) error {
+	err := readMessage(state)
+	if err != nil {
+		return err
+	}
+	for state.client.hasNext() {
+		err := readMessage(state)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 	state := downloadState{
 		index:  pw.index,
@@ -89,11 +104,10 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 		buf:    make([]byte, pw.length),
 	}
 
-	requested := 0
 	for state.downloaded < pw.length {
 		// Block and consume messages until not choked
 		if c.choked {
-			err := readMessage(&state)
+			err := readMessages(&state)
 			if err != nil {
 				return nil, err
 			}
@@ -101,31 +115,21 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 		}
 
 		// Send requests until we have enough unfulfilled requests
-		for state.backlog < maxBacklog && requested < pw.length {
+		for state.backlog < maxBacklog && state.requested < pw.length {
 			blockSize := maxBlockSize
-			if pw.length-requested < blockSize {
-				// Last block might be shorter than the typical block
-				blockSize = pw.length - requested
+			// Last block might be shorter than the typical block
+			if pw.length-state.requested < blockSize {
+				blockSize = pw.length - state.requested
 			}
 
-			// log.Println("Requesting", pw.index, requested, blockSize)
-			c.request(pw.index, requested, blockSize)
+			c.request(pw.index, state.requested, blockSize)
 			state.backlog++
-			requested += blockSize
+			state.requested += blockSize
 		}
 
-		// Block to read at least one message
-		err := readMessage(&state)
+		err := readMessages(&state)
 		if err != nil {
 			return nil, err
-		}
-
-		// Read the rest of the messages, if any
-		for c.hasNext() {
-			err := readMessage(&state)
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 	return state.buf, nil
