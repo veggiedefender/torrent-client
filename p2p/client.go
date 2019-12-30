@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/veggiedefender/torrent-client/bitfield"
+
 	"github.com/veggiedefender/torrent-client/message"
 
 	"github.com/veggiedefender/torrent-client/handshake"
@@ -18,7 +20,7 @@ type client struct {
 	peerID   [20]byte
 	conn     net.Conn
 	reader   *bufio.Reader
-	bitfield message.Bitfield
+	bitfield bitfield.Bitfield
 	choked   bool
 }
 
@@ -39,7 +41,7 @@ func completeHandshake(conn net.Conn, r *bufio.Reader, infohash, peerID [20]byte
 	return res, nil
 }
 
-func recvBitfield(conn net.Conn, r *bufio.Reader) (message.Bitfield, error) {
+func recvBitfield(conn net.Conn, r *bufio.Reader) (bitfield.Bitfield, error) {
 	conn.SetDeadline(time.Now().Local().Add(5 * time.Second))
 	defer conn.SetDeadline(time.Time{}) // Disable the deadline
 
