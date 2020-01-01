@@ -72,11 +72,7 @@ func Open(r io.Reader) (*TorrentFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	t, err := bto.toTorrent()
-	if err != nil {
-		return nil, err
-	}
-	return t, nil
+	return bto.toTorrentFile()
 }
 
 func (i *bencodeInfo) hash() ([20]byte, error) {
@@ -105,7 +101,7 @@ func (i *bencodeInfo) splitPieceHashes() ([][20]byte, error) {
 	return hashes, nil
 }
 
-func (bto *bencodeTorrent) toTorrent() (*TorrentFile, error) {
+func (bto *bencodeTorrent) toTorrentFile() (*TorrentFile, error) {
 	infoHash, err := bto.Info.hash()
 	if err != nil {
 		return nil, err
