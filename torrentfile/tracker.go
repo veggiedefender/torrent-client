@@ -1,37 +1,19 @@
 package torrentfile
 
 import (
-	"encoding/binary"
-	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 
+	"github.com/veggiedefender/torrent-client/peers"
+
 	"github.com/jackpal/bencode-go"
-	"github.com/veggiedefender/torrent-client/p2p"
 )
 
 type bencodeTrackerResp struct {
 	Interval int    `bencode:"interval"`
 	Peers    string `bencode:"port"`
-}
-
-func parsePeers(peersBin string) ([]p2p.Peer, error) {
-	const peerSize = 6 // 4 for IP, 2 for port
-	numPeers := len(peersBin) / peerSize
-	if len(peersBin)%peerSize != 0 {
-		err := fmt.Errorf("Received malformed peers")
-		return nil, err
-	}
-	peers := make([]p2p.Peer, numPeers)
-	for i := 0; i < numPeers; i++ {
-		offset := i * peerSize
-		peers[i].IP = net.IP(peersBin[offset : offset+4])
-		peers[i].Port = binary.BigEndian.Uint16([]byte(peersBin[offset+4 : offset+6]))
-	}
-	return peers, nil
 }
 
 func (t *TorrentFile) buildTrackerURL(peerID [20]byte, port uint16) (string, error) {
@@ -52,7 +34,7 @@ func (t *TorrentFile) buildTrackerURL(peerID [20]byte, port uint16) (string, err
 	return base.String(), nil
 }
 
-func (t *TorrentFile) requestPeers(peerID [20]byte, port uint16) ([]p2p.Peer, error) {
+func (t *TorrentFile) requestPeers(peerID [20]byte, port uint16) ([]peers.Peer, error) {
 	url, err := t.buildTrackerURL(peerID, port)
 	if err != nil {
 		return nil, err
@@ -71,7 +53,7 @@ func (t *TorrentFile) requestPeers(peerID [20]byte, port uint16) ([]p2p.Peer, er
 		return nil, err
 	}
 
-	peers, err := parsePeers(trackerResp.Peers)
+	peers, err := peers.Unmarshal([]byte(trackerResp.Peers))
 	if err != nil {
 		return nil, err
 	}

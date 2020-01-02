@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/veggiedefender/torrent-client/bitfield"
+	"github.com/veggiedefender/torrent-client/peers"
 
 	"github.com/veggiedefender/torrent-client/message"
 
@@ -15,7 +16,7 @@ import (
 )
 
 type client struct {
-	peer     Peer
+	peer     peers.Peer
 	infoHash [20]byte
 	peerID   [20]byte
 	conn     net.Conn
@@ -57,7 +58,7 @@ func recvBitfield(conn net.Conn, r *bufio.Reader) (bitfield.Bitfield, error) {
 	return msg.Payload, nil
 }
 
-func newClient(peer Peer, peerID, infoHash [20]byte) (*client, error) {
+func newClient(peer peers.Peer, peerID, infoHash [20]byte) (*client, error) {
 	hostPort := net.JoinHostPort(peer.IP.String(), strconv.Itoa(int(peer.Port)))
 	conn, err := net.DialTimeout("tcp", hostPort, 3*time.Second)
 	if err != nil {
