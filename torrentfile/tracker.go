@@ -18,7 +18,7 @@ type bencodeTrackerResp struct {
 }
 
 func parsePeers(peersBin string) ([]p2p.Peer, error) {
-	peerSize := 6 // 4 for IP, 2 for port
+	const peerSize = 6 // 4 for IP, 2 for port
 	numPeers := len(peersBin) / peerSize
 	if len(peersBin)%peerSize != 0 {
 		err := errors.New("Received malformed peers")
