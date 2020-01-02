@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// A Handshake is a sequence of bytes a peer uses to identify itself
+// A Handshake is a special message that a peer uses to identify itself
 type Handshake struct {
 	Pstr     string
 	InfoHash [20]byte
@@ -35,7 +35,7 @@ func (h *Handshake) Serialize() []byte {
 	return buf
 }
 
-// Read parses a message from a stream. Returns `nil` on keep-alive message
+// Read parses a handshake from a stream
 func Read(r *bufio.Reader) (*Handshake, error) {
 	lengthBuf := make([]byte, 1)
 	_, err := io.ReadFull(r, lengthBuf)
