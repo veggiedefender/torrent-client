@@ -44,7 +44,7 @@ func (t *TorrentFile) Download() ([]byte, error) {
 		return nil, err
 	}
 
-	peers, err := t.getPeers(peerID, Port)
+	peers, err := t.requestPeers(peerID, Port)
 	if err != nil {
 		return nil, err
 	}

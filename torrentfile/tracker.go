@@ -51,7 +51,7 @@ func (t *TorrentFile) buildTrackerURL(peerID [20]byte, port uint16) (string, err
 	return base.String(), nil
 }
 
-func (t *TorrentFile) getPeers(peerID [20]byte, port uint16) ([]p2p.Peer, error) {
+func (t *TorrentFile) requestPeers(peerID [20]byte, port uint16) ([]p2p.Peer, error) {
 	url, err := t.buildTrackerURL(peerID, port)
 	if err != nil {
 		return nil, err
