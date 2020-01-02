@@ -254,7 +254,6 @@ func TestString(t *testing.T) {
 		{&Message{MsgRequest, []byte{1, 2, 3}}, "Request [3]"},
 		{&Message{MsgPiece, []byte{1, 2, 3}}, "Piece [3]"},
 		{&Message{MsgCancel, []byte{1, 2, 3}}, "Cancel [3]"},
-		{&Message{MsgPort, []byte{1, 2, 3}}, "Port [3]"},
 		{&Message{99, []byte{1, 2, 3}}, "Unknown#99 [3]"},
 	}
 
