@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/veggiedefender/torrent-client/client"
 	"github.com/veggiedefender/torrent-client/message"
 	"github.com/veggiedefender/torrent-client/peers"
 )
@@ -42,7 +43,7 @@ type pieceResult struct {
 
 type pieceProgress struct {
 	index      int
-	client     *client
+	client     *client.Client
 	buf        []byte
 	downloaded int
 	requested  int
@@ -50,7 +51,7 @@ type pieceProgress struct {
 }
 
 func (state *pieceProgress) readMessage() error {
-	msg, err := state.client.read() // this call blocks
+	msg, err := state.client.Read() // this call blocks
 	if err != nil {
 		return err
 	}
@@ -61,15 +62,15 @@ func (state *pieceProgress) readMessage() error {
 
 	switch msg.ID {
 	case message.MsgUnchoke:
-		state.client.choked = false
+		state.client.Choked = false
 	case message.MsgChoke:
-		state.client.choked = true
+		state.client.Choked = true
 	case message.MsgHave:
 		index, err := message.ParseHave(msg)
 		if err != nil {
 			return err
 		}
-		state.client.bitfield.SetPiece(index)
+		state.client.Bitfield.SetPiece(index)
 	case message.MsgPiece:
 		n, err := message.ParsePiece(state.index, state.buf, msg)
 		if err != nil {
@@ -86,7 +87,7 @@ func (state *pieceProgress) readMessages() error {
 	if err != nil {
 		return err
 	}
-	for state.client.hasNext() {
+	for state.client.HasNext() {
 		err := state.readMessage()
 		if err != nil {
 			return err
@@ -95,7 +96,7 @@ func (state *pieceProgress) readMessages() error {
 	return nil
 }
 
-func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
+func attemptDownloadPiece(c *client.Client, pw *pieceWork) ([]byte, error) {
 	state := pieceProgress{
 		index:  pw.index,
 		client: c,
@@ -104,12 +105,12 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 
 	// Setting a deadline helps get unresponsive peers unstuck.
 	// 30 seconds is more than enough time to download a 262 KB piece
-	c.conn.SetDeadline(time.Now().Add(30 * time.Second))
-	defer c.conn.SetDeadline(time.Time{}) // Disable the deadline
+	c.Conn.SetDeadline(time.Now().Add(30 * time.Second))
+	defer c.Conn.SetDeadline(time.Time{}) // Disable the deadline
 
 	for state.downloaded < pw.length {
 		// If unchoked, send requests until we have enough unfulfilled requests
-		if !state.client.choked {
+		if !state.client.Choked {
 			for state.backlog < MaxBacklog && state.requested < pw.length {
 				blockSize := MaxBlockSize
 				// Last block might be shorter than the typical block
@@ -117,7 +118,7 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 					blockSize = pw.length - state.requested
 				}
 
-				err := c.sendRequest(pw.index, state.requested, blockSize)
+				err := c.SendRequest(pw.index, state.requested, blockSize)
 				if err != nil {
 					return nil, err
 				}
@@ -145,19 +146,19 @@ func checkIntegrity(pw *pieceWork, buf []byte) error {
 }
 
 func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork, results chan *pieceResult) {
-	c, err := newClient(peer, t.PeerID, t.InfoHash)
+	c, err := client.New(peer, t.PeerID, t.InfoHash)
 	if err != nil {
 		log.Printf("Could not handshake with %s. Disconnecting\n", peer.IP)
 		return
 	}
-	defer c.conn.Close()
+	defer c.Conn.Close()
 	log.Printf("Completed handshake with %s\n", peer.IP)
 
-	c.sendUnchoke()
-	c.sendInterested()
+	c.SendUnchoke()
+	c.SendInterested()
 
 	for pw := range workQueue {
-		if !c.hasPiece(pw.index) {
+		if !c.Bitfield.HasPiece(pw.index) {
 			workQueue <- pw // Put piece back on the queue
 			continue
 		}
@@ -177,7 +178,7 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 			continue
 		}
 
-		c.sendHave(pw.index)
+		c.SendHave(pw.index)
 		results <- &pieceResult{pw.index, buf}
 	}
 }
