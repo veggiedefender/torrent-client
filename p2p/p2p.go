@@ -117,7 +117,7 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 					blockSize = pw.length - state.requested
 				}
 
-				err := c.request(pw.index, state.requested, blockSize)
+				err := c.sendRequest(pw.index, state.requested, blockSize)
 				if err != nil {
 					return nil, err
 				}
@@ -153,8 +153,8 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 	defer c.conn.Close()
 	log.Printf("Completed handshake with %s\n", peer.IP)
 
-	c.unchoke()
-	c.interested()
+	c.sendUnchoke()
+	c.sendInterested()
 
 	for pw := range workQueue {
 		if !c.hasPiece(pw.index) {
@@ -177,7 +177,7 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 			continue
 		}
 
-		c.have(pw.index)
+		c.sendHave(pw.index)
 		results <- &pieceResult{pw.index, buf}
 	}
 }

@@ -102,31 +102,31 @@ func (c *client) read() (*message.Message, error) {
 	return msg, err
 }
 
-func (c *client) request(index, begin, length int) error {
+func (c *client) sendRequest(index, begin, length int) error {
 	req := message.FormatRequest(index, begin, length)
 	_, err := c.conn.Write(req.Serialize())
 	return err
 }
 
-func (c *client) interested() error {
+func (c *client) sendInterested() error {
 	msg := message.Message{ID: message.MsgInterested}
 	_, err := c.conn.Write(msg.Serialize())
 	return err
 }
 
-func (c *client) notInterested() error {
+func (c *client) sendNotInterested() error {
 	msg := message.Message{ID: message.MsgNotInterested}
 	_, err := c.conn.Write(msg.Serialize())
 	return err
 }
 
-func (c *client) unchoke() error {
+func (c *client) sendUnchoke() error {
 	msg := message.Message{ID: message.MsgUnchoke}
 	_, err := c.conn.Write(msg.Serialize())
 	return err
 }
 
-func (c *client) have(index int) error {
+func (c *client) sendHave(index int) error {
 	msg := message.FormatHave(index)
 	_, err := c.conn.Write(msg.Serialize())
 	return err
