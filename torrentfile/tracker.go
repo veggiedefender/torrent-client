@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/jackpal/bencode-go"
 	"github.com/veggiedefender/torrent-client/p2p"
@@ -57,7 +58,8 @@ func (t *TorrentFile) requestPeers(peerID [20]byte, port uint16) ([]p2p.Peer, er
 		return nil, err
 	}
 
-	resp, err := http.Get(url)
+	c := &http.Client{Timeout: 15 * time.Second}
+	resp, err := c.Get(url)
 	if err != nil {
 		return nil, err
 	}
