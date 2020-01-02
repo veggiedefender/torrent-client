@@ -11,27 +11,12 @@ func main() {
 	inPath := os.Args[1]
 	outPath := os.Args[2]
 
-	inFile, err := os.Open(inPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer inFile.Close()
-
-	t, err := torrentfile.Open(inFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	buf, err := t.Download()
+	tf, err := torrentfile.Open(inPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	outFile, err := os.Create(outPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer outFile.Close()
-	_, err = outFile.Write(buf)
+	err = tf.DownloadToFile(outPath)
 	if err != nil {
 		log.Fatal(err)
 	}

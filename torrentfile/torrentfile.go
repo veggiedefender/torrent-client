@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"fmt"
-	"io"
+	"os"
 
 	"github.com/jackpal/bencode-go"
 	"github.com/veggiedefender/torrent-client/p2p"
@@ -36,17 +36,17 @@ type bencodeTorrent struct {
 	Info     bencodeInfo `bencode:"info"`
 }
 
-// Download downloads a torrent
-func (t *TorrentFile) Download() ([]byte, error) {
+// DownloadToFile downloads a torrent and writes it to a file
+func (t *TorrentFile) DownloadToFile(path string) error {
 	var peerID [20]byte
 	_, err := rand.Read(peerID[:])
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	peers, err := t.requestPeers(peerID, Port)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	torrent := p2p.Torrent{
@@ -60,15 +60,31 @@ func (t *TorrentFile) Download() ([]byte, error) {
 	}
 	buf, err := torrent.Download()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return buf, nil
+
+	outFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+	_, err = outFile.Write(buf)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Open parses a torrent file
-func Open(r io.Reader) (TorrentFile, error) {
+func Open(path string) (TorrentFile, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return TorrentFile{}, err
+	}
+	defer file.Close()
+
 	bto := bencodeTorrent{}
-	err := bencode.Unmarshal(r, &bto)
+	err = bencode.Unmarshal(file, &bto)
 	if err != nil {
 		return TorrentFile{}, err
 	}
