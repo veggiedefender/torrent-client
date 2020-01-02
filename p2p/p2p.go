@@ -173,8 +173,8 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 			continue
 		}
 
-		results <- &pieceResult{pw.index, buf}
 		c.have(pw.index)
+		results <- &pieceResult{pw.index, buf}
 	}
 }
 
