@@ -2,7 +2,7 @@ package torrentfile
 
 import (
 	"encoding/binary"
-	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -21,7 +21,7 @@ func parsePeers(peersBin string) ([]p2p.Peer, error) {
 	const peerSize = 6 // 4 for IP, 2 for port
 	numPeers := len(peersBin) / peerSize
 	if len(peersBin)%peerSize != 0 {
-		err := errors.New("Received malformed peers")
+		err := fmt.Errorf("Received malformed peers")
 		return nil, err
 	}
 	peers := make([]p2p.Peer, numPeers)

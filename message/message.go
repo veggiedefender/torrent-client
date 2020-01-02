@@ -3,7 +3,6 @@ package message
 import (
 	"bufio"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 )
@@ -52,7 +51,7 @@ func ParsePiece(index int, buf []byte, msg *Message) (int, error) {
 		return 0, fmt.Errorf("Expected PIECE (ID %d), got ID %d", MsgPiece, msg.ID)
 	}
 	if len(msg.Payload) < 8 {
-		return 0, errors.New("Payload too short")
+		return 0, fmt.Errorf("Payload too short. %d < 8", len(msg.Payload))
 	}
 	parsedIndex := int(binary.BigEndian.Uint32(msg.Payload[0:4]))
 	if parsedIndex != index {

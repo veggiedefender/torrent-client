@@ -2,7 +2,7 @@ package handshake
 
 import (
 	"bufio"
-	"errors"
+	"fmt"
 	"io"
 )
 
@@ -45,7 +45,7 @@ func Read(r *bufio.Reader) (*Handshake, error) {
 	pstrlen := int(lengthBuf[0])
 
 	if pstrlen == 0 {
-		err := errors.New("pstrlen cannot be 0")
+		err := fmt.Errorf("pstrlen cannot be 0")
 		return nil, err
 	}
 
