@@ -116,7 +116,10 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 					blockSize = pw.length - state.requested
 				}
 
-				c.request(pw.index, state.requested, blockSize)
+				err := c.request(pw.index, state.requested, blockSize)
+				if err != nil {
+					return nil, err
+				}
 				state.backlog++
 				state.requested += blockSize
 			}
