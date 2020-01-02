@@ -39,7 +39,7 @@ type pieceResult struct {
 	buf   []byte
 }
 
-type downloadState struct {
+type pieceProgress struct {
 	index      int
 	client     *client
 	buf        []byte
@@ -48,7 +48,7 @@ type downloadState struct {
 	backlog    int
 }
 
-func readMessage(state *downloadState) error {
+func (state *pieceProgress) readMessage() error {
 	msg, err := state.client.read() // this call blocks
 	if err != nil {
 		return err
@@ -80,13 +80,13 @@ func readMessage(state *downloadState) error {
 	return nil
 }
 
-func readMessages(state *downloadState) error {
-	err := readMessage(state)
+func (state *pieceProgress) readMessages() error {
+	err := state.readMessage()
 	if err != nil {
 		return err
 	}
 	for state.client.hasNext() {
-		err := readMessage(state)
+		err := state.readMessage()
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func readMessages(state *downloadState) error {
 }
 
 func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
-	state := downloadState{
+	state := pieceProgress{
 		index:  pw.index,
 		client: c,
 		buf:    make([]byte, pw.length),
@@ -126,7 +126,7 @@ func attemptDownloadPiece(c *client, pw *pieceWork) ([]byte, error) {
 		}
 
 		// Wait until we receive at least one message, and consume them
-		err := readMessages(&state)
+		err := state.readMessages()
 		if err != nil {
 			return nil, err
 		}
