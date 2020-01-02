@@ -188,7 +188,7 @@ func calculateBoundsForPiece(index, numPieces, length int) (begin int, end int) 
 	return begin, end
 }
 
-// Download downloads the torrent
+// Download downloads the torrent. This stores the entire file in memory.
 func (t *Torrent) Download() ([]byte, error) {
 	log.Println("Starting download for", t.Name)
 	// Init queues for workers to retrieve work and send results
