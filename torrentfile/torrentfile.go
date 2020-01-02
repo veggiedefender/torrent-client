@@ -45,6 +45,9 @@ func (t *TorrentFile) Download() ([]byte, error) {
 	}
 
 	peers, err := t.getPeers(peerID, Port)
+	if err != nil {
+		return nil, err
+	}
 
 	torrent := p2p.Torrent{
 		Peers:       peers,
