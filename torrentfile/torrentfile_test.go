@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,10 +13,7 @@ import (
 var update = flag.Bool("update", false, "update .golden.json files")
 
 func TestOpen(t *testing.T) {
-	input, err := os.Open("testdata/archlinux-2019.12.01-x86_64.iso.torrent")
-	require.Nil(t, err)
-
-	torrent, err := Open(input)
+	torrent, err := Open("testdata/archlinux-2019.12.01-x86_64.iso.torrent")
 	require.Nil(t, err)
 
 	goldenPath := "testdata/archlinux-2019.12.01-x86_64.iso.torrent.golden.json"
