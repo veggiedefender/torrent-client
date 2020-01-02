@@ -24,6 +24,7 @@ type Torrent struct {
 	PeerID      [20]byte
 	InfoHash    [20]byte
 	PieceHashes [][20]byte
+	PieceLength int
 	Length      int
 	Name        string
 }
@@ -181,11 +182,18 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 	}
 }
 
-func calculateBoundsForPiece(index, numPieces, length int) (begin int, end int) {
-	pieceLength := length / numPieces
-	begin = index * pieceLength
-	end = begin + pieceLength
+func (t *Torrent) calculateBoundsForPiece(index int) (begin int, end int) {
+	begin = index * t.PieceLength
+	end = begin + t.PieceLength
+	if end > t.Length {
+		end = t.Length
+	}
 	return begin, end
+}
+
+func (t *Torrent) calculatePieceSize(index int) int {
+	begin, end := t.calculateBoundsForPiece(index)
+	return end - begin
 }
 
 // Download downloads the torrent. This stores the entire file in memory.
@@ -195,7 +203,7 @@ func (t *Torrent) Download() ([]byte, error) {
 	workQueue := make(chan *pieceWork, len(t.PieceHashes))
 	results := make(chan *pieceResult, len(t.PieceHashes))
 	for index, hash := range t.PieceHashes {
-		length := t.Length / len(t.PieceHashes)
+		length := t.calculatePieceSize(index)
 		workQueue <- &pieceWork{index, hash, length}
 	}
 
@@ -209,7 +217,7 @@ func (t *Torrent) Download() ([]byte, error) {
 	donePieces := 0
 	for donePieces < len(t.PieceHashes) {
 		res := <-results
-		begin, end := calculateBoundsForPiece(res.index, len(t.PieceHashes), t.Length)
+		begin, end := t.calculateBoundsForPiece(res.index)
 		copy(buf[begin:end], res.buf)
 		donePieces++
 

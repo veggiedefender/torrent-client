@@ -54,6 +54,7 @@ func (t *TorrentFile) Download() ([]byte, error) {
 		PeerID:      peerID,
 		InfoHash:    t.InfoHash,
 		PieceHashes: t.PieceHashes,
+		PieceLength: t.PieceLength,
 		Length:      t.Length,
 		Name:        t.Name,
 	}
