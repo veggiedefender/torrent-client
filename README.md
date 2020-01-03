@@ -1,6 +1,8 @@
 # torrent-client
 
-Torrent downloader written in Go
+[![CircleCI](https://circleci.com/gh/veggiedefender/torrent-client.svg?style=shield)](https://circleci.com/gh/veggiedefender/torrent-client)
+
+Tiny BitTorrent client written in Go
 
 ## Install
 
