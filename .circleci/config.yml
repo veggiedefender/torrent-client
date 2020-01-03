@@ -1,0 +1,11 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.13.4
+
+    working_directory: /go/src/github.com/veggiedefender/torrent-client
+    steps:
+      - checkout
+      - run: go get -v -t -d ./...
+      - run: go test -v ./...
