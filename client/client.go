@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	"strconv"
 	"time"
 
 	"github.com/veggiedefender/torrent-client/bitfield"
@@ -64,8 +63,7 @@ func recvBitfield(conn net.Conn) (bitfield.Bitfield, error) {
 // New connects with a peer, completes a handshake, and receives a handshake
 // returns an err if any of those fail.
 func New(peer peers.Peer, peerID, infoHash [20]byte) (*Client, error) {
-	hostPort := net.JoinHostPort(peer.IP.String(), strconv.Itoa(int(peer.Port)))
-	conn, err := net.DialTimeout("tcp", hostPort, 3*time.Second)
+	conn, err := net.DialTimeout("tcp", peer.String(), 3*time.Second)
 	if err != nil {
 		return nil, err
 	}

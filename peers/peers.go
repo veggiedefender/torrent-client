@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strconv"
 )
 
 // Peer encodes connection information for a peer
@@ -27,4 +28,8 @@ func Unmarshal(peersBin []byte) ([]Peer, error) {
 		peers[i].Port = binary.BigEndian.Uint16([]byte(peersBin[offset+4 : offset+6]))
 	}
 	return peers, nil
+}
+
+func (p Peer) String() string {
+	return net.JoinHostPort(p.IP.String(), strconv.Itoa(int(p.Port)))
 }

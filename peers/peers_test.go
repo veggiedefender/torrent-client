@@ -37,3 +37,19 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, test.output, peers)
 	}
 }
+
+func TestString(t *testing.T) {
+	tests := []struct {
+		input  Peer
+		output string
+	}{
+		{
+			input:  Peer{IP: net.IP{127, 0, 0, 1}, Port: 8080},
+			output: "127.0.0.1:8080",
+		},
+	}
+	for _, test := range tests {
+		s := test.input.String()
+		assert.Equal(t, test.output, s)
+	}
+}
