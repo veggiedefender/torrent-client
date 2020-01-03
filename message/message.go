@@ -1,7 +1,6 @@
 package message
 
 import (
-	"bufio"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -104,7 +103,7 @@ func (m *Message) Serialize() []byte {
 }
 
 // Read parses a message from a stream. Returns `nil` on keep-alive message
-func Read(r *bufio.Reader) (*Message, error) {
+func Read(r io.Reader) (*Message, error) {
 	lengthBuf := make([]byte, 4)
 	_, err := io.ReadFull(r, lengthBuf)
 	if err != nil {

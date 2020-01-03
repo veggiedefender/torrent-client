@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"net"
@@ -24,10 +23,9 @@ type Client struct {
 	peer     peers.Peer
 	infoHash [20]byte
 	peerID   [20]byte
-	reader   *bufio.Reader
 }
 
-func completeHandshake(conn net.Conn, r *bufio.Reader, infohash, peerID [20]byte) (*handshake.Handshake, error) {
+func completeHandshake(conn net.Conn, infohash, peerID [20]byte) (*handshake.Handshake, error) {
 	conn.SetDeadline(time.Now().Add(3 * time.Second))
 	defer conn.SetDeadline(time.Time{}) // Disable the deadline
 
@@ -37,7 +35,7 @@ func completeHandshake(conn net.Conn, r *bufio.Reader, infohash, peerID [20]byte
 		return nil, err
 	}
 
-	res, err := handshake.Read(r)
+	res, err := handshake.Read(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +45,11 @@ func completeHandshake(conn net.Conn, r *bufio.Reader, infohash, peerID [20]byte
 	return res, nil
 }
 
-func recvBitfield(conn net.Conn, r *bufio.Reader) (bitfield.Bitfield, error) {
+func recvBitfield(conn net.Conn) (bitfield.Bitfield, error) {
 	conn.SetDeadline(time.Now().Add(5 * time.Second))
 	defer conn.SetDeadline(time.Time{}) // Disable the deadline
 
-	msg, err := message.Read(r)
+	msg, err := message.Read(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -71,15 +69,14 @@ func New(peer peers.Peer, peerID, infoHash [20]byte) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	reader := bufio.NewReader(conn)
 
-	_, err = completeHandshake(conn, reader, infoHash, peerID)
+	_, err = completeHandshake(conn, infoHash, peerID)
 	if err != nil {
 		conn.Close()
 		return nil, err
 	}
 
-	bf, err := recvBitfield(conn, reader)
+	bf, err := recvBitfield(conn)
 	if err != nil {
 		conn.Close()
 		return nil, err
@@ -92,18 +89,12 @@ func New(peer peers.Peer, peerID, infoHash [20]byte) (*Client, error) {
 		peer:     peer,
 		infoHash: infoHash,
 		peerID:   peerID,
-		reader:   reader,
 	}, nil
-}
-
-// HasNext returns true if there are unread messages from the peer
-func (c *Client) HasNext() bool {
-	return c.reader.Buffered() > 0
 }
 
 // Read reads and consumes a message from the connection
 func (c *Client) Read() (*message.Message, error) {
-	msg, err := message.Read(c.reader)
+	msg, err := message.Read(c.Conn)
 	return msg, err
 }
 

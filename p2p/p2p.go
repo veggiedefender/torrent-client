@@ -82,20 +82,6 @@ func (state *pieceProgress) readMessage() error {
 	return nil
 }
 
-func (state *pieceProgress) readMessages() error {
-	err := state.readMessage()
-	if err != nil {
-		return err
-	}
-	for state.client.HasNext() {
-		err := state.readMessage()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func attemptDownloadPiece(c *client.Client, pw *pieceWork) ([]byte, error) {
 	state := pieceProgress{
 		index:  pw.index,
@@ -127,8 +113,7 @@ func attemptDownloadPiece(c *client.Client, pw *pieceWork) ([]byte, error) {
 			}
 		}
 
-		// Wait until we receive at least one message, and consume them
-		err := state.readMessages()
+		err := state.readMessage()
 		if err != nil {
 			return nil, err
 		}
