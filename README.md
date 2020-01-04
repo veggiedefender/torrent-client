@@ -17,6 +17,9 @@ Try downloading [Debian](https://cdimage.debian.org/debian-cd/current/amd64/bt-c
 torrent-client debian-10.2.0-amd64-netinst.iso.torrent debian.iso
 ```
 
+[![asciicast](https://asciinema.org/a/xqRSB0Jec8RN91Zt89rbb9PcL.svg)](https://asciinema.org/a/xqRSB0Jec8RN91Zt89rbb9PcL)
+
+
 ## Limitations
 * Only supports `.torrent` files (no magnet links)
 * Only supports HTTP trackers
