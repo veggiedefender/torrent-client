@@ -23,14 +23,13 @@ func New(infoHash, peerID [20]byte) *Handshake {
 
 // Serialize serializes the handshake to a buffer
 func (h *Handshake) Serialize() []byte {
-	pstrlen := len(h.Pstr)
-	bufLen := 49 + pstrlen
-	buf := make([]byte, bufLen)
-	buf[0] = byte(pstrlen)
-	copy(buf[1:], h.Pstr)
-	// Leave 8 reserved bytes
-	copy(buf[1+pstrlen+8:], h.InfoHash[:])
-	copy(buf[1+pstrlen+8+20:], h.PeerID[:])
+	buf := make([]byte, len(h.Pstr)+49)
+	buf[0] = byte(len(h.Pstr))
+	curr := 1
+	curr += copy(buf[curr:], h.Pstr)
+	curr += copy(buf[curr:], make([]byte, 8)) // 8 reserved bytes
+	curr += copy(buf[curr:], h.InfoHash[:])
+	curr += copy(buf[curr:], h.PeerID[:])
 	return buf
 }
 
