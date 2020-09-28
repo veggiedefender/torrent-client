@@ -48,6 +48,11 @@ func TestRecvBitfield(t *testing.T) {
 			output: nil,
 			fails:  true,
 		},
+		"message is keep-alive": {
+			msg:    []byte{0x00, 0x00, 0x00, 0x00},
+			output: nil,
+			fails:  true,
+		},
 	}
 
 	for _, test := range tests {
