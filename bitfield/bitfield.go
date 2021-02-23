@@ -10,7 +10,7 @@ func (bf Bitfield) HasPiece(index int) bool {
 	if byteIndex < 0 || byteIndex >= len(bf) {
 		return false
 	}
-	return bf[byteIndex]>>(7-offset)&1 != 0
+	return bf[byteIndex]>>uint(7-offset)&1 != 0
 }
 
 // SetPiece sets a bit in the bitfield
@@ -22,5 +22,5 @@ func (bf Bitfield) SetPiece(index int) {
 	if byteIndex < 0 || byteIndex >= len(bf) {
 		return
 	}
-	bf[byteIndex] |= 1 << (7 - offset)
+	bf[byteIndex] |= 1 << uint(7 - offset)
 }
