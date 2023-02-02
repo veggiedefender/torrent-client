@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/edelars/console-torrent-client/torrentfile"
 	"log"
 	"os"
-
-	"github.com/veggiedefender/torrent-client/torrentfile"
 )
 
 func main() {

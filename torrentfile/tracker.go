@@ -1,12 +1,11 @@
 package torrentfile
 
 import (
+	"github.com/edelars/console-torrent-client/peers"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/veggiedefender/torrent-client/peers"
 
 	"github.com/jackpal/bencode-go"
 )

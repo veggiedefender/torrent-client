@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/golang:1.13.4
 
-    working_directory: /go/src/github.com/veggiedefender/torrent-client
+    working_directory: /go/src/github.com/edelars/console-torrent-client
     steps:
       - checkout
       - run: go get -v -t -d ./...

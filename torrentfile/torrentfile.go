@@ -5,10 +5,9 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"fmt"
-	"os"
-
+	"github.com/edelars/console-torrent-client/p2p"
 	"github.com/jackpal/bencode-go"
-	"github.com/veggiedefender/torrent-client/p2p"
+	"os"
 )
 
 // Port to listen on
