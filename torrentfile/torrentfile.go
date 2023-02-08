@@ -2,25 +2,45 @@ package torrentfile
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"github.com/edelars/console-torrent-client/p2p"
 	"github.com/jackpal/bencode-go"
+	"net/url"
 	"os"
 )
+
+const (
+	TrackerProtoHttp = iota
+	TrackerProtoUdp
+)
+
+var (
+	ErrUnknownProto = errors.New("unknown proto")
+)
+
+type Proto int
 
 // Port to listen on
 const Port uint16 = 6881
 
 // TorrentFile encodes the metadata from a .torrent file
 type TorrentFile struct {
-	Announce    string
+	UrlAnnounce url.URL
 	InfoHash    [20]byte
 	PieceHashes [][20]byte
 	PieceLength int
 	Length      int
 	Name        string
+	Proto       Proto
+}
+
+func (t *TorrentFile) VerifyFiles(ctx context.Context, path string) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 type bencodeInfo struct {
@@ -36,7 +56,7 @@ type bencodeTorrent struct {
 }
 
 // DownloadToFile downloads a torrent and writes it to a file
-func (t *TorrentFile) DownloadToFile(path string) error {
+func (t *TorrentFile) DownloadToFile(ctx context.Context, path string) error {
 	var peerID [20]byte
 	_, err := rand.Read(peerID[:])
 	if err != nil {
@@ -48,6 +68,13 @@ func (t *TorrentFile) DownloadToFile(path string) error {
 		return err
 	}
 
+	outFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	defer outFile.Close()
+
 	torrent := p2p.Torrent{
 		Peers:       peers,
 		PeerID:      peerID,
@@ -57,25 +84,31 @@ func (t *TorrentFile) DownloadToFile(path string) error {
 		Length:      t.Length,
 		Name:        t.Name,
 	}
-	buf, err := torrent.Download()
+	ch, err := torrent.Download(ctx)
 	if err != nil {
 		return err
+	}
+	for d := range ch {
+		if err := writePieceToFile(outFile, d); err != nil {
+			return err
+		}
 	}
 
-	outFile, err := os.Create(path)
-	if err != nil {
+	return nil
+}
+
+func writePieceToFile(outFile *os.File, data p2p.PieceFile) error {
+	if _, err := outFile.Seek(data.Begin, 0); err != nil {
 		return err
 	}
-	defer outFile.Close()
-	_, err = outFile.Write(buf)
-	if err != nil {
+	if _, err := outFile.Write(data.Data); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Open parses a torrent file
-func Open(path string) (TorrentFile, error) {
+// NewTorrentFileFromFile parses a torrent file
+func NewTorrentFileFromFile(path string) (TorrentFile, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return TorrentFile{}, err
@@ -84,10 +117,14 @@ func Open(path string) (TorrentFile, error) {
 
 	bto := bencodeTorrent{}
 	err = bencode.Unmarshal(file, &bto)
+
+	//bto.Announce = "udp://tracker.opentrackr.org:1337/announce"
+
 	if err != nil {
 		return TorrentFile{}, err
 	}
-	return bto.toTorrentFile()
+
+	return newFromBto(bto)
 }
 
 func (i *bencodeInfo) hash() ([20]byte, error) {
@@ -116,22 +153,39 @@ func (i *bencodeInfo) splitPieceHashes() ([][20]byte, error) {
 	return hashes, nil
 }
 
-func (bto *bencodeTorrent) toTorrentFile() (TorrentFile, error) {
+func newFromBto(bto bencodeTorrent) (t TorrentFile, err error) {
+
+	u, err := url.Parse(bto.Announce)
+	if err != nil {
+		return t, err
+	}
+
+	switch u.Scheme {
+	case "https":
+		fallthrough
+	case "http":
+		t.Proto = TrackerProtoHttp
+	case "udp":
+		t.Proto = TrackerProtoUdp
+	default:
+		return t, ErrUnknownProto
+	}
+
 	infoHash, err := bto.Info.hash()
 	if err != nil {
-		return TorrentFile{}, err
+		return t, err
 	}
 	pieceHashes, err := bto.Info.splitPieceHashes()
 	if err != nil {
-		return TorrentFile{}, err
+		return t, err
 	}
-	t := TorrentFile{
-		Announce:    bto.Announce,
-		InfoHash:    infoHash,
-		PieceHashes: pieceHashes,
-		PieceLength: bto.Info.PieceLength,
-		Length:      bto.Info.Length,
-		Name:        bto.Info.Name,
-	}
+
+	t.UrlAnnounce = *u
+	t.InfoHash = infoHash
+	t.PieceHashes = pieceHashes
+	t.PieceLength = bto.Info.PieceLength
+	t.Length = bto.Info.Length
+	t.Name = bto.Info.Name
+
 	return t, nil
 }

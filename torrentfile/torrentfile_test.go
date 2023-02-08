@@ -13,7 +13,7 @@ import (
 var update = flag.Bool("update", false, "update .golden.json files")
 
 func TestOpen(t *testing.T) {
-	torrent, err := Open("testdata/archlinux-2019.12.01-x86_64.iso.torrent")
+	torrent, err := NewTorrentFileFromFile("testdata/archlinux-2019.12.01-x86_64.iso.torrent")
 	require.Nil(t, err)
 
 	goldenPath := "testdata/archlinux-2019.12.01-x86_64.iso.torrent.golden.json"

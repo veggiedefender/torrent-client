@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"fmt"
 	"log"
@@ -183,9 +184,10 @@ func (t *Torrent) calculatePieceSize(index int) int {
 }
 
 // Download downloads the torrent. This stores the entire file in memory.
-func (t *Torrent) Download() ([]byte, error) {
+func (t *Torrent) Download(ctx context.Context) (chan PieceFile, error) {
 	log.Println("Starting download for", t.Name)
 	// Init queues for workers to retrieve work and send results
+	outPFChan := make(chan PieceFile, 5)
 	workQueue := make(chan *pieceWork, len(t.PieceHashes))
 	results := make(chan *pieceResult)
 	for index, hash := range t.PieceHashes {
@@ -197,21 +199,34 @@ func (t *Torrent) Download() ([]byte, error) {
 	for _, peer := range t.Peers {
 		go t.startDownloadWorker(peer, workQueue, results)
 	}
+	go func() {
+		defer close(outPFChan)
 
-	// Collect results into a buffer until full
-	buf := make([]byte, t.Length)
-	donePieces := 0
-	for donePieces < len(t.PieceHashes) {
-		res := <-results
-		begin, end := t.calculateBoundsForPiece(res.index)
-		copy(buf[begin:end], res.buf)
-		donePieces++
+		donePieces := 0
+		for donePieces < len(t.PieceHashes) {
+			select {
+			case res := <-results:
+				begin, _ := t.calculateBoundsForPiece(res.index)
+				outPFChan <- PieceFile{
+					Begin: int64(begin),
+					Data:  res.buf,
+				}
+				donePieces++
 
-		percent := float64(donePieces) / float64(len(t.PieceHashes)) * 100
-		numWorkers := runtime.NumGoroutine() - 1 // subtract 1 for main thread
-		log.Printf("(%0.2f%%) Downloaded piece #%d from %d peers\n", percent, res.index, numWorkers)
-	}
-	close(workQueue)
+				percent := float64(donePieces) / float64(len(t.PieceHashes)) * 100
+				numWorkers := runtime.NumGoroutine() - 1 // subtract 1 for main thread
+				log.Printf("(%0.2f%%) Downloaded piece #%d from %d peers\n", percent, res.index, numWorkers)
+			case <-ctx.Done():
+				return
+			}
 
-	return buf, nil
+		}
+		close(workQueue)
+	}()
+	return outPFChan, nil
+}
+
+type PieceFile struct {
+	Begin int64
+	Data  []byte
 }
