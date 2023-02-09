@@ -12,6 +12,7 @@ type TorrentPool struct {
 	pool                            map[[20]byte]itemPool
 	torrentFileDir, downloadFileDir string
 	mutex                           sync.Mutex
+	stopChan                        chan struct{}
 }
 
 type itemPool struct {
@@ -26,18 +27,24 @@ func NewTorrentPool(logger console_print.Logger, torrentFileDir, downloadFileDir
 		torrentFileDir:  torrentFileDir,
 		downloadFileDir: downloadFileDir,
 		pool:            make(map[[20]byte]itemPool),
+		stopChan:        make(chan struct{}, 1),
 	}
 }
 
 // Start perform start our pool of torrents
 func (p *TorrentPool) Start(ctx context.Context) error {
 
-	return nil
+	select {
+	case <-ctx.Done():
+		return nil
+	case <-p.stopChan:
+		return nil
+	}
 }
 
 // Stop perform stop our pool of torrents
 func (p *TorrentPool) Stop() error {
-
+	p.stopChan <- struct{}{}
 	return nil
 }
 
@@ -54,10 +61,10 @@ func (p *TorrentPool) AddFileToPool(filename string) error {
 	}
 	p.addPool(tf.InfoHash, itemPool)
 
-	err = tf.DownloadToFile(context.Background(), p.downloadFileDir)
-	if err != nil {
-		return err
-	}
+	//err = tf.DownloadToFile(context.Background(), p.downloadFileDir)
+	//if err != nil {
+	//	return err
+	//}
 	return nil
 }
 

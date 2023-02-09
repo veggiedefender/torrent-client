@@ -31,7 +31,7 @@ func main() {
 		fmt.Print("%w", err)
 	}
 
-	cp := console_print.NewConsolePrint([]string{app_name}, []string{"-----------"})
+	cp := console_print.NewConsolePrint([]string{app_name, "_______"}, []string{"-----------"})
 
 	var wg sync.WaitGroup
 	errs := make(chan error, 4)
@@ -40,7 +40,7 @@ func main() {
 	ctx := context.Background()
 
 	cp.Log("Starting pool")
-	mainPool := pool.NewTorrentPool(cp, env.TFDir, env.DFDir)
+	mainPool := pool.NewTorrentPool(&cp, env.TFDir, env.DFDir)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -50,13 +50,13 @@ func main() {
 	cp.Log(fmt.Sprintf("Start release: %s, commit: %s, build time: %s",
 		version.Release, version.Commit, version.BuildTime))
 
-	if arg := os.Args[len(os.Args)-2]; arg == "add " {
+	if arg := os.Args[len(os.Args)-2]; arg == "add" {
 		file := os.Args[len(os.Args)-1]
 
 		cp.Log("Add file: " + file)
 
 		if err := mainPool.AddFileToPool(file); err != nil {
-			cp.Log(err.Error())
+			cp.Log("error add torrent file: " + err.Error())
 		}
 	}
 

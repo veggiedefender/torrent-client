@@ -111,7 +111,7 @@ func writePieceToFile(outFile *os.File, data p2p.PieceFile) error {
 func NewTorrentFileFromFile(path string) (TorrentFile, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return TorrentFile{}, err
+		return TorrentFile{}, fmt.Errorf("cant open file: %w", err)
 	}
 	defer file.Close()
 
@@ -121,7 +121,7 @@ func NewTorrentFileFromFile(path string) (TorrentFile, error) {
 	//bto.Announce = "udp://tracker.opentrackr.org:1337/announce"
 
 	if err != nil {
-		return TorrentFile{}, err
+		return TorrentFile{}, fmt.Errorf("cant parse file: %w", err)
 	}
 
 	return newFromBto(bto)

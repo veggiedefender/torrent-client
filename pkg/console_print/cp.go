@@ -18,11 +18,11 @@ func NewConsolePrint(top, bottom []string) ConsolePrint {
 	}
 }
 
-func (p ConsolePrint) Update(outStrings ...string) {
+func (p *ConsolePrint) Update(outStrings ...string) {
 	p.update()
 }
 
-func (p ConsolePrint) update() {
+func (p *ConsolePrint) update() {
 	tm.Clear() // Clear current screen
 	tm.MoveCursor(1, 1)
 	p.printTop()
@@ -36,21 +36,30 @@ func (p ConsolePrint) update() {
 	tm.Flush()
 }
 
-func (p ConsolePrint) printTop() {
+func (p *ConsolePrint) printTop() {
 	for _, s := range p.top {
 		tm.Println(tm.Color(tm.Bold(s), tm.GREEN))
 	}
 }
 
-func (p ConsolePrint) printBottom() {
+func (p *ConsolePrint) printBottom() {
 	for _, s := range p.bottom {
 		tm.Println(tm.Color(tm.Bold(s), tm.YELLOW))
 	}
 }
 
-func (p ConsolePrint) Log(string string) {
+func (p *ConsolePrint) Log(string string) {
 	p.log = append(p.log, string)
+	p.log = p.pushSlice(p.log, p.maxLog)
 	p.update()
+}
+
+func (p *ConsolePrint) pushSlice(a []string, max int) (res []string) {
+	if len(a) > max {
+		res = a[1:len(a)]
+		return res
+	}
+	return a
 }
 
 type Logger interface {
