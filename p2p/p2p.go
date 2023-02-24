@@ -125,7 +125,7 @@ func attemptDownloadPiece(c *client.Client, pw *pieceWork) ([]byte, error) {
 func checkIntegrity(pw *pieceWork, buf []byte) error {
 	hash := sha1.Sum(buf)
 	if !bytes.Equal(hash[:], pw.hash[:]) {
-		return fmt.Errorf("Index %d failed integrity check", pw.index)
+		return fmt.Errorf("index %d failed integrity check", pw.index)
 	}
 	return nil
 }

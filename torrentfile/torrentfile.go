@@ -29,14 +29,10 @@ type TorrentFile struct {
 type bencodeInfo struct {
 	Pieces      string     `bencode:"pieces"`
 	PieceLength int        `bencode:"piece length"`
-	Length      int        `bencode:"length"`
 	Name        string     `bencode:"name"`
+	Length      int        `bencode:"length,omitempty"`
 	Files       []fileInfo `bencode:"files,omitempty"`
 }
-
-// TODO: check if torrents to test are still valid -> why doesnt it work
-// with this version? I cant even get to the tracker -> maybe info hash gets fucked
-// because there is the Files not being omit when empty?
 
 type bencodeTorrent struct {
 	Announce string      `bencode:"announce"`
