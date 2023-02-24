@@ -34,6 +34,10 @@ type bencodeInfo struct {
 	Files       []fileInfo `bencode:"files,omitempty"`
 }
 
+// TODO: check if torrents to test are still valid -> why doesnt it work
+// with this version? I cant even get to the tracker -> maybe info hash gets fucked
+// because there is the Files not being omit when empty?
+
 type bencodeTorrent struct {
 	Announce string      `bencode:"announce"`
 	Info     bencodeInfo `bencode:"info"`

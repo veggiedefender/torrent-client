@@ -70,6 +70,8 @@ func TestBencodeMultifileTorrent(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	fmt.Println(bto.Info.Files)
+
 	want := fileInfo{
 		Length: 63109789,
 		Path:   []string{"14 転がる岩、君に朝が降る.flac"},
@@ -78,7 +80,23 @@ func TestBencodeMultifileTorrent(t *testing.T) {
 	got := bto.Info.Files[0]
 
 	assert.Equal(t, want, got)
+}
 
+func TestBencodeSinglefileTorrent(t *testing.T) {
+	path := "testdata/archlinux-2019.12.01-x86_64.iso.torrent"
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	bto := bencodeTorrent{}
+	err = bencode.Unmarshal(file, &bto)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Println(bto.Info.Files)
 }
 
 func TestSetLengthOfMultifileTorrent(t *testing.T) {
