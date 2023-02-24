@@ -40,9 +40,10 @@ func TestCreatePathSingleFileTorrent(t *testing.T) {
 	require.Nil(t, err)
 
 	expect := single.Name
-	want := createPath(".", single.Files[0].Path[0], &single)
+	directory, outputPath := createPath(".", single.Files[0].Path[0], &single)
 
-	assert.Equal(t, expect, want)
+	assert.Equal(t, expect, outputPath)
+	assert.Equal(t, ".", directory)
 }
 
 func TestCreatePathMultiFileTorrent(t *testing.T) {
@@ -50,9 +51,10 @@ func TestCreatePathMultiFileTorrent(t *testing.T) {
 	require.Nil(t, err)
 
 	for _, file := range multi.Files {
-		want := createPath(".", file.Path[0], &multi)
+		directory, outputPath := createPath(".", file.Path[0], &multi)
 		expect := fmt.Sprintf("%s/%s", multi.Name, file.Path[0])
-		assert.Equal(t, expect, want)
+		assert.Equal(t, expect, outputPath)
+		assert.Equal(t, multi.Name, directory)
 	}
 }
 

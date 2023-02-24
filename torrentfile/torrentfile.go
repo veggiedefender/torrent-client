@@ -1,6 +1,7 @@
 package torrentfile
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/rand"
 	"crypto/sha1"
@@ -76,16 +77,26 @@ func (t *TorrentFile) DownloadToFile(path string) error {
 
 func createFiles(t *TorrentFile, path string, buf []byte) error {
 	reader := bytes.NewReader(buf)
+	bufferedReader := bufio.NewReader(reader)
 
 	for _, file := range t.Files {
-		return createFile(reader, t, path, file)
+		err := createFile(bufferedReader, t, path, file)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func createFile(reader *bytes.Reader, t *TorrentFile, path string, file fileInfo) error {
-	outputPath := createPath(path, file.Path[0], t)
+func createFile(reader *bufio.Reader, t *TorrentFile, path string, file fileInfo) error {
+	directory, outputPath := createPath(path, file.Path[0], t)
+
+	err := os.MkdirAll(directory, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
 	outFile, err := os.Create(outputPath)
 	if err != nil {
 		return err
@@ -105,7 +116,7 @@ func createFile(reader *bytes.Reader, t *TorrentFile, path string, file fileInfo
 	return nil
 }
 
-func createFileBuf(reader *bytes.Reader, length int) ([]byte, error) {
+func createFileBuf(reader *bufio.Reader, length int) ([]byte, error) {
 	fileBuf := make([]byte, length)
 
 	_, err := reader.Read(fileBuf)
@@ -116,12 +127,12 @@ func createFileBuf(reader *bytes.Reader, length int) ([]byte, error) {
 	return fileBuf, nil
 }
 
-func createPath(path, filename string, t *TorrentFile) string {
+func createPath(path, filename string, t *TorrentFile) (directory, outputPath string) {
 	if len(t.Files) < 2 {
-		return filepath.Join(path, t.Name)
+		return path, filepath.Join(path, t.Name)
 	}
 
-	return filepath.Join(path, t.Name, filename)
+	return filepath.Join(path, t.Name), filepath.Join(path, t.Name, filename)
 }
 
 // Open parses a torrent file
