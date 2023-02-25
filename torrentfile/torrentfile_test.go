@@ -10,6 +10,7 @@ import (
 	"github.com/jackpal/bencode-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/veggiedefender/torrent-client/fileinfo"
 )
 
 var update = flag.Bool("update", false, "update .golden.json files")
@@ -35,29 +36,6 @@ func TestOpen(t *testing.T) {
 	assert.Equal(t, expected, torrent)
 }
 
-func TestCreatePathSingleFileTorrent(t *testing.T) {
-	single, err := Open("testdata/archlinux-2019.12.01-x86_64.iso.torrent")
-	require.Nil(t, err)
-
-	expect := single.Name
-	directory, outputPath := createPath(".", single.Files[0].Path[0], &single)
-
-	assert.Equal(t, expect, outputPath)
-	assert.Equal(t, ".", directory)
-}
-
-func TestCreatePathMultiFileTorrent(t *testing.T) {
-	multi, err := Open("testdata/bocchi.torrent")
-	require.Nil(t, err)
-
-	for _, file := range multi.Files {
-		directory, outputPath := createPath(".", file.Path[0], &multi)
-		expect := fmt.Sprintf("%s/%s", multi.Name, file.Path[0])
-		assert.Equal(t, expect, outputPath)
-		assert.Equal(t, multi.Name, directory)
-	}
-}
-
 func TestBencodeMultifileTorrent(t *testing.T) {
 	path := "testdata/bocchi.torrent"
 	file, err := os.Open(path)
@@ -72,7 +50,7 @@ func TestBencodeMultifileTorrent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := fileInfo{
+	want := fileinfo.FileInfo{
 		Length: 63109789,
 		Path:   []string{"14 転がる岩、君に朝が降る.flac"},
 	}
@@ -132,7 +110,7 @@ func TestToTorrentFile(t *testing.T) {
 				PieceLength: 262144,
 				Length:      351272960,
 				Name:        "debian-10.2.0-amd64-netinst.iso",
-				Files: []fileInfo{
+				Files: []fileinfo.FileInfo{
 					{
 						Length: 351272960,
 						Path:   []string{"debian-10.2.0-amd64-netinst.iso"},

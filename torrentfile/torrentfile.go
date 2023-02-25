@@ -1,15 +1,14 @@
 package torrentfile
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/rand"
 	"crypto/sha1"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/jackpal/bencode-go"
+	"github.com/veggiedefender/torrent-client/fileinfo"
 	"github.com/veggiedefender/torrent-client/p2p"
 )
 
@@ -24,15 +23,7 @@ type TorrentFile struct {
 	PieceLength int
 	Name        string
 	Length      int
-	Files       []fileInfo
-}
-
-type bencodeInfo struct {
-	Pieces      string     `bencode:"pieces"`
-	PieceLength int        `bencode:"piece length"`
-	Name        string     `bencode:"name"`
-	Length      int        `bencode:"length,omitempty"`
-	Files       []fileInfo `bencode:"files,omitempty"`
+	Files       []fileinfo.FileInfo
 }
 
 type bencodeTorrent struct {
@@ -40,9 +31,12 @@ type bencodeTorrent struct {
 	Info     bencodeInfo `bencode:"info"`
 }
 
-type fileInfo struct {
-	Length int      `bencode:"length"`
-	Path   []string `bencode:"path"`
+type bencodeInfo struct {
+	Pieces      string              `bencode:"pieces"`
+	PieceLength int                 `bencode:"piece length"`
+	Name        string              `bencode:"name"`
+	Length      int                 `bencode:"length,omitempty"`
+	Files       []fileinfo.FileInfo `bencode:"files,omitempty"`
 }
 
 // DownloadToFile downloads a torrent and writes it to a file
@@ -72,67 +66,19 @@ func (t *TorrentFile) DownloadToFile(path string) error {
 		return err
 	}
 
-	return createFiles(t, path, buf)
+	return t.createFiles(path, buf)
 }
 
-func createFiles(t *TorrentFile, path string, buf []byte) error {
-	reader := bytes.NewReader(buf)
-	bufferedReader := bufio.NewReader(reader)
-
+func (t *TorrentFile) createFiles(path string, buf []byte) error {
+	fmt.Println("Saving files...")
 	for _, file := range t.Files {
-		err := createFile(bufferedReader, t, path, file)
+		err := file.WriteToDisk(buf, t.Files, path, t.Name)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func createFile(reader *bufio.Reader, t *TorrentFile, path string, file fileInfo) error {
-	directory, outputPath := createPath(path, file.Path[0], t)
-
-	err := os.MkdirAll(directory, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	outFile, err := os.Create(outputPath)
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
-
-	fileBuf, err := createFileBuf(reader, file.Length)
-	if err != nil {
-		return err
-	}
-
-	_, err = outFile.Write(fileBuf)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func createFileBuf(reader *bufio.Reader, length int) ([]byte, error) {
-	fileBuf := make([]byte, length)
-
-	_, err := reader.Read(fileBuf)
-	if err != nil {
-		return nil, err
-	}
-
-	return fileBuf, nil
-}
-
-func createPath(path, filename string, t *TorrentFile) (directory, outputPath string) {
-	if len(t.Files) < 2 {
-		return path, filepath.Join(path, t.Name)
-	}
-
-	return filepath.Join(path, t.Name), filepath.Join(path, t.Name, filename)
 }
 
 // Open parses a torrent file
@@ -193,17 +139,17 @@ func (i *bencodeInfo) setTotalLength() int {
 	return length
 }
 
-func (i *bencodeInfo) setFileInfos() []fileInfo {
+func (i *bencodeInfo) setFileInfos() []fileinfo.FileInfo {
 	if len(i.Files) != 0 && i.Length == 0 {
 		return i.Files
 	}
 
-	singleFile := fileInfo{
+	singleFile := fileinfo.FileInfo{
 		Length: i.Length,
 		Path:   []string{i.Name},
 	}
 
-	return []fileInfo{
+	return []fileinfo.FileInfo{
 		singleFile,
 	}
 }
