@@ -3,7 +3,6 @@ package torrentfile
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 	"testing"
 
@@ -75,7 +74,8 @@ func TestBencodeSinglefileTorrent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fmt.Println(bto.Info.Files)
+	assert.Empty(t, bto.Info.Files)
+	assert.NotEmpty(t, bto.Info.Length)
 }
 
 func TestSetLengthOfMultifileTorrent(t *testing.T) {
