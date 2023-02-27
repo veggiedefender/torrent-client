@@ -3,11 +3,13 @@ package torrentfile
 import (
 	"encoding/json"
 	"flag"
-	"io/ioutil"
+	"os"
 	"testing"
 
+	"github.com/jackpal/bencode-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/veggiedefender/torrent-client/fileinfo"
 )
 
 var update = flag.Bool("update", false, "update .golden.json files")
@@ -20,16 +22,66 @@ func TestOpen(t *testing.T) {
 	if *update {
 		serialized, err := json.MarshalIndent(torrent, "", "  ")
 		require.Nil(t, err)
-		ioutil.WriteFile(goldenPath, serialized, 0644)
+		os.WriteFile(goldenPath, serialized, 0644)
 	}
 
 	expected := TorrentFile{}
-	golden, err := ioutil.ReadFile(goldenPath)
+	golden, err := os.ReadFile(goldenPath)
 	require.Nil(t, err)
 	err = json.Unmarshal(golden, &expected)
+
 	require.Nil(t, err)
 
 	assert.Equal(t, expected, torrent)
+}
+
+func TestBencodeMultifileTorrent(t *testing.T) {
+	path := "testdata/bocchi.torrent"
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	bto := bencodeTorrent{}
+	err = bencode.Unmarshal(file, &bto)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := fileinfo.FileInfo{
+		Length: 63109789,
+		Path:   []string{"14 転がる岩、君に朝が降る.flac"},
+	}
+
+	got := bto.Info.Files[0]
+
+	assert.Equal(t, want, got)
+	assert.Empty(t, bto.Info.Length)
+}
+
+func TestBencodeSinglefileTorrent(t *testing.T) {
+	path := "testdata/archlinux-2019.12.01-x86_64.iso.torrent"
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	bto := bencodeTorrent{}
+	err = bencode.Unmarshal(file, &bto)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Empty(t, bto.Info.Files)
+	assert.NotEmpty(t, bto.Info.Length)
+}
+
+func TestSetLengthOfMultifileTorrent(t *testing.T) {
+	torrent, err := Open("testdata/bocchi.torrent")
+	assert.Nil(t, err)
+	assert.Equal(t, torrent.Length, 764345370)
 }
 
 func TestToTorrentFile(t *testing.T) {
@@ -58,6 +110,12 @@ func TestToTorrentFile(t *testing.T) {
 				PieceLength: 262144,
 				Length:      351272960,
 				Name:        "debian-10.2.0-amd64-netinst.iso",
+				Files: []fileinfo.FileInfo{
+					{
+						Length: 351272960,
+						Path:   []string{"debian-10.2.0-amd64-netinst.iso"},
+					},
+				},
 			},
 			fails: false,
 		},
