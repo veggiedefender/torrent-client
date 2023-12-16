@@ -7,6 +7,7 @@ import (
 	"log"
 	"runtime"
 	"time"
+	"os"
 
 	"github.com/veggiedefender/torrent-client/client"
 	"github.com/veggiedefender/torrent-client/message"
@@ -183,7 +184,7 @@ func (t *Torrent) calculatePieceSize(index int) int {
 }
 
 // Download downloads the torrent. This stores the entire file in memory.
-func (t *Torrent) Download() ([]byte, error) {
+func (t *Torrent) Download(path string) error {
 	log.Println("Starting download for", t.Name)
 	// Init queues for workers to retrieve work and send results
 	workQueue := make(chan *pieceWork, len(t.PieceHashes))
@@ -198,13 +199,27 @@ func (t *Torrent) Download() ([]byte, error) {
 		go t.startDownloadWorker(peer, workQueue, results)
 	}
 
-	// Collect results into a buffer until full
-	buf := make([]byte, t.Length)
+	outFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	// using the index of the piece received, write the 
 	donePieces := 0
 	for donePieces < len(t.PieceHashes) {
 		res := <-results
-		begin, end := t.calculateBoundsForPiece(res.index)
-		copy(buf[begin:end], res.buf)
+		begin, _ := t.calculateBoundsForPiece(res.index)
+
+		_, err = outFile.Seek(int64(begin), 0)
+		if err != nil {
+			return err
+		}
+		_, err = outFile.Write(res.buf)
+		if err != nil {
+			return err
+		}
+
 		donePieces++
 
 		percent := float64(donePieces) / float64(len(t.PieceHashes)) * 100
@@ -213,5 +228,5 @@ func (t *Torrent) Download() ([]byte, error) {
 	}
 	close(workQueue)
 
-	return buf, nil
+	return nil
 }
