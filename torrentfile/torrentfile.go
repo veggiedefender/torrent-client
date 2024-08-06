@@ -69,10 +69,7 @@ func (t *TorrentFile) DownloadToFile(path string) error {
 	}
 	defer outFile.Close()
 	_, err = outFile.Write(buf)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // Open parses a torrent file
